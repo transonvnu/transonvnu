@@ -1,0 +1,23 @@
+Removed Pin From Net: NetName=NetQB1_2 Pin=QB1-4
+Removed Pin From Net: NetName=NetQB2_2 Pin=QB2-4
+Removed Pin From Net: NetName=NetQB3_2 Pin=QB3-4
+Removed Pin From Net: NetName=NetQB4_2 Pin=QB4-4
+Removed Pin From Net: NetName=NetQB5_2 Pin=QB5-4
+Removed Pin From Net: NetName=NetQB6_2 Pin=QB6-4
+Removed Pin From Net: NetName=NetQB7_2 Pin=QB7-4
+Removed Pin From Net: NetName=NetQB8_2 Pin=QB8-4
+Change Component Footprint: Designator=HD1 Old Footprint=HED2T New Footprint=JP2
+Change Component Footprint: Designator=HD2 Old Footprint=HED2T New Footprint=JP2
+Change Component Footprint: Designator=C1 Old Footprint=MELF-R3216-1206 New Footprint=6-0805_N
+Change Component Footprint: Designator=C2 Old Footprint=MELF-R3216-1206 New Footprint=6-0805_N
+Change Component Footprint: Designator=R4 Old Footprint=MELF-R3216-1206 New Footprint=6-0805_N
+Change Component Footprint: Designator=R5 Old Footprint=MELF-R3216-1206 New Footprint=6-0805_N
+Change Component Footprint: Designator=R6 Old Footprint=MELF-R3216-1206 New Footprint=6-0805_N
+Change Component Footprint: Designator=R7 Old Footprint=MELF-R3216-1206 New Footprint=6-0805_N
+Change Component Footprint: Designator=R8 Old Footprint=MELF-R3216-1206 New Footprint=6-0805_N
+Change Component Footprint: Designator=R9 Old Footprint=MELF-R3216-1206 New Footprint=6-0805_N
+Change Component Footprint: Designator=R10 Old Footprint=MELF-R3216-1206 New Footprint=6-0805_N
+Change Component Footprint: Designator=R11 Old Footprint=MELF-R3216-1206 New Footprint=6-0805_N
+Added Member To Class: ClassName=project1 Member=Component QB4 D718
+Added Member To Class: ClassName=project1 Member=Component R13 1K
+Added Room: Name=project1

@@ -1,0 +1,32 @@
+Removed Pin From Net: NetName=O0 Pin=QB1-1
+Removed Pin From Net: NetName=O1 Pin=QB2-1
+Removed Pin From Net: NetName=O2 Pin=QB3-1
+Removed Pin From Net: NetName=O3 Pin=QB4-1
+Removed Pin From Net: NetName=O4 Pin=QB5-1
+Removed Pin From Net: NetName=O5 Pin=QB6-1
+Removed Pin From Net: NetName=O6 Pin=QB7-1
+Removed Pin From Net: NetName=O7 Pin=QB8-1
+Removed Pin From Net: NetName=5VDC Pin=U1-2
+Removed Pin From Net: NetName=GND Pin=U1-3
+Change Component Designator: OldDesignator=HD3 NewDesignator=HD4
+Change Component Designator: OldDesignator=HD4 NewDesignator=HD3
+Added Pin To Net: NetName=GND Pin=U1-2
+Added Pin To Net: NetName=5VDC Pin=U1-3
+Added Pin To Net: NetName=5VDC Pin=U2-16
+Change Net Name : Old Net Name=NetHD3_1 New Net Name=DATA IN
+Added Pin To Net: NetName=NetQB1_1 Pin=QB1-1
+Added Net: Name=NetQB1_1
+Added Pin To Net: NetName=NetQB2_1 Pin=QB2-1
+Added Net: Name=NetQB2_1
+Added Pin To Net: NetName=NetQB3_1 Pin=QB3-1
+Added Net: Name=NetQB3_1
+Added Pin To Net: NetName=NetQB4_1 Pin=QB4-1
+Added Net: Name=NetQB4_1
+Added Pin To Net: NetName=NetQB5_1 Pin=QB5-1
+Added Net: Name=NetQB5_1
+Added Pin To Net: NetName=NetQB6_1 Pin=QB6-1
+Added Net: Name=NetQB6_1
+Added Pin To Net: NetName=NetQB7_1 Pin=QB7-1
+Added Net: Name=NetQB7_1
+Added Pin To Net: NetName=NetQB8_1 Pin=QB8-1
+Added Net: Name=NetQB8_1
