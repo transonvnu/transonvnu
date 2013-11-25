@@ -1,0 +1,5 @@
+Change Component Footprint: Designator=LD1 Old Footprint=LED-5 New Footprint=LED3mm
+Change Component Footprint: Designator=LD2 Old Footprint=LED-5 New Footprint=LED-5TRED
+Change Component Footprint: Designator=R1 Old Footprint=R1/4W New Footprint=6-0805_L
+Change Component Footprint: Designator=R2 Old Footprint=R1/4W New Footprint=6-0805_L
+Change Component Footprint: Designator=R3 Old Footprint=R1/4W New Footprint=6-0805_L

@@ -1,0 +1,43 @@
+Removed Pin From Net: NetName=12VDC Pin=HD5-1
+Removed Pin From Net: NetName=12VDC Pin=HD6-1
+Removed Pin From Net: NetName=12VDC Pin=HD7-1
+Removed Pin From Net: NetName=12VDC Pin=HD8-1
+Removed Pin From Net: NetName=12VDC Pin=HD9-1
+Removed Pin From Net: NetName=12VDC Pin=HD10-1
+Removed Pin From Net: NetName=12VDC Pin=HD11-1
+Removed Pin From Net: NetName=12VDC Pin=HD12-1
+Removed Member From Class: ClassName=project1 Member=HD5
+Removed Member From Class: ClassName=project1 Member=HD6
+Removed Member From Class: ClassName=project1 Member=HD7
+Removed Member From Class: ClassName=project1 Member=HD8
+Removed Member From Class: ClassName=project1 Member=HD9
+Removed Member From Class: ClassName=project1 Member=HD10
+Removed Member From Class: ClassName=project1 Member=HD11
+Removed Member From Class: ClassName=project1 Member=HD12
+Added Component: Designator=P?(HDR1X9)
+Added Pin To Net: NetName=12VDC Pin=P?-1
+Added Pin To Net: NetName=NetP?_2 Pin=P?-2
+Added Pin To Net: NetName=NetP?_2 Pin=R4-2
+Added Net: Name=NetP?_2
+Added Pin To Net: NetName=NetP?_3 Pin=P?-3
+Added Pin To Net: NetName=NetP?_3 Pin=R5-2
+Added Net: Name=NetP?_3
+Added Pin To Net: NetName=NetP?_4 Pin=P?-4
+Added Pin To Net: NetName=NetP?_4 Pin=R6-2
+Added Net: Name=NetP?_4
+Added Pin To Net: NetName=NetP?_5 Pin=P?-5
+Added Pin To Net: NetName=NetP?_5 Pin=R7-2
+Added Net: Name=NetP?_5
+Added Pin To Net: NetName=NetP?_6 Pin=P?-6
+Added Pin To Net: NetName=NetP?_6 Pin=R8-2
+Added Net: Name=NetP?_6
+Added Pin To Net: NetName=NetP?_7 Pin=P?-7
+Added Pin To Net: NetName=NetP?_7 Pin=R9-2
+Added Net: Name=NetP?_7
+Added Pin To Net: NetName=NetP?_8 Pin=P?-8
+Added Pin To Net: NetName=NetP?_8 Pin=R10-2
+Added Net: Name=NetP?_8
+Added Pin To Net: NetName=NetP?_9 Pin=P?-9
+Added Pin To Net: NetName=NetP?_9 Pin=R11-2
+Added Net: Name=NetP?_9
+Added Member To Class: ClassName=project1 Member=Component P? Header 9

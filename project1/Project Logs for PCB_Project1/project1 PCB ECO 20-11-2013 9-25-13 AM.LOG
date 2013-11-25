@@ -1,0 +1,5 @@
+Change Component Footprint: Designator= Old Footprint=HDR1X9 New Footprint=Edge Connector - duplicate
+Change Component Designator: OldDesignator= NewDesignator=P?
+Added Member To Class: ClassName=project1 Member=Component P? Header 9
+Added Member To Class: ClassName=project1 Member=Component QB4 D718
+Added Member To Class: ClassName=project1 Member=Component QB8 D718
