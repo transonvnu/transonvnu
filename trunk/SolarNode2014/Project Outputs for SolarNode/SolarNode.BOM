@@ -1,0 +1,122 @@
+Bill of Material for 
+On 2/26/2014 at 5:00:41 PM
+
+ Comment             Pattern     Quantity  Components
+------------------------------------------------------------------------------
+ +3V                 NI-MH-3V6        1    B1                           Ni-Mh 3v6 chargable  
+ 0.047uF/275VAC      100N400V         1    C31                          X2 0.047uF/275VAC    
+ 0.1uF/275VAC        100N400V         1    C32                          0.1uF/275VAC X2      
+ 0R option           6-0805_N         1    R9                           0R option            
+ 0R option           JP2              1    R8                           0R option            
+ 10                  6-0805_N         1    R55                          Semiconductor Resistor 
+ 1000u25V            CAP40X20         5    C5, C11, C36, C40, C41       Capacitor            
+ 1000uF-10v          CAP_ELEC_SIZE_E    3    C6, C6A, C38                 Electrolytic Capacitor 
+ 100k                6-0805_N        10    R1, R3, R11, R12, R26, R36   Semiconductor Resistor 
+                                           R37, R73, R76, R77
+ 100nF/275VAC        100N400V         1    C35                          100nF/275VAC X2      
+ 100u - 330uH        IND1207          1    L12                                               
+ 100u16V             CAPMP7343X310N    1    C7                           Capacitor            
+ 100uH 1A            IND1207          2    L10, L11                     100uH 1A SMD HP      
+ 102                 C6-0805_N        3    C2, C17, C42                 Capacitor            
+ 104                 C6-0805_N       16    C1, C3, C4, C9, C15, C16, C18 Capacitor            
+                                           C19, C20, C21, C22, C23, C24
+                                           C27, C37, C39
+ 107                 CAPMP7343X310N    1    C13                          Capacitor            
+ 10k                 6-0805_N        23    R2, R10, R13, R16, R17, R20  Semiconductor Resistor 
+                                           R21, R22, R24, R27, R28, R35
+                                           R53, R54, R57, R59, R62, R64
+                                           R65, R67, R74, R75, R78
+ 10K                 BTXANH           1    R30                          Potentiometer        
+ 10uH                R6-0805_N        1    L14                          80 Ohm SMD-0805 Chip Ferrite Bead 
+ 12V 10A             RELAYVUONG       4    K1, K2, K3, K4               G5LA-10A/250VAC / SRC-12VDC-SL-C 
+ 14.7456MHz option   XTAL             1    Y3                           Crystal Oscillator   
+ 14.7456MHz SMD      CRYSTAL_HC49-US-SM    1    Y4                           Crystal Oscillator   
+ 15k                 6-0805_N         3    R4, R6, R38                  Semiconductor Resistor 
+ 15nF                R3216[1206]      1    C34                          Capacitor            
+ 1K                  6-0805_N        12    R29, R39, R40, R41, R42, R43 Semiconductor Resistor 
+                                           R44, R45, R46, R56, R63, R70
+ 1K                  BTXANH           1    VR2                          Potentiometer        
+ 1K8                 6-0805_N         1    R32                                               
+ 1mH                 6-0805_N         1    L5                                                
+ 1mH                 AXIAL-0.3        1    L5A                                               
+ 1N4007              DO-214AA         3    D13, D16, D16A                                    
+ 1N4148              SOD80, LL-34     8    D1, D4, D5, D8, D9, D10, D12                      
+                                           D15
+ 1R0                 6-0805_N         1    R33                          Semiconductor Resistor 
+ 1u16V               CAPMP3528X210N    1    C8                           Capacitor            
+ 1uF metalized polyester CSIP3            1    C30                          Capacitor            
+ 1uF/275VAC          CAP1.2/0.5       1    C33                          1uF/275VAC X2        
+ 220 VAC IN          TERMINAL2        1    J6                           Connector            
+ 220k                R3216[1206]      4    R14, R15, R18, R19                                
+ 22k                 6-0805_N         1    R66                                               
+ 22p                 C6-0805_N        2    C25, C26                     Capacitor            
+ 2K                  6-0805_N         1    R61                          Semiconductor Resistor 
+ 2K2                 6-0805_N         5    R31, R49, R50, R51, R52                           
+ 2k7                 6-0805_N         1    R69                                               
+ 2N2222              SOT23-3          5    Q8, Q9, Q10, Q14, Q15        NPN Transistor       
+ 2N3904              SOT23-3          3    Q1, Q2, Q3                   NPN Transistor       
+ 2N3906              SOT23-3          4    Q4, Q5, Q6, Q12              PNP Transistor       
+ 32,768k             R38              1    Y5                           Crystal              
+ 330                 R3216[1206]      1    R58                          Semiconductor Resistor 
+ 33k                 6-0805_N         1    R23                                               
+ 33uH                6D28             1    L4                           0805 inductor        
+ 33uH                Axial-0.3        1    L4A                          Axial inductor       
+ 4017                SOIC127P600X175-16AN    1    U4                                                
+ 470                 6-0805_N         1    R25                          Semiconductor Resistor 
+ 470uF-16v           CAP_ELEC_SIZE_E    1    C12                          Electrolytic Capacitor 
+ 47k                 6-0805_N         2    R5, R34                      Semiconductor Resistor 
+ 4K7                 6-0805_N         1    R60                          Semiconductor Resistor 
+ 560K 1/4W           R3216[1206]      2    R47, R48                                          
+ 600W AC/DC MODULE   TERMINAL2        1    J7                           Connector            
+ 600W VIN            TERMINAL2        1    J9                           Connector            
+ 680uH               6-0805_N         1    L6                                                
+ 680uH               AXIAL-0.3        1    L6A                                               
+ 68p                 C6-0805_N        2    C28, C29                     Capacitor            
+ 74HC02              SOIC127P600X175-14AN    1    U5                                                
+ 74HC573             SOIC127P1041-20L    1    U9                                                
+ 78M05               D2PAK-3          2    U3, U12                                           
+ 95-150W 12/24VDC LED LAMP TERMINAL2        1    J8                           Connector            
+ ACS712              M08A_N           3    U1, U6, U14                                       
+ ATC-12S             ATC MODULE       1    U11                                               
+ ATmega64            QFP64-3          1    U7                           8-Bit AVR Microcontroller with 64K Bytes of In-System Programmable Flash Memory 
+ BIU_LED             LED3mm           1    LED3                                              
+ BSH205              SOT23-3          1    Q13                          P Mosfet transistor, input Logic level, Fast switching, 12V - 750mA 
+ COM_PORT0_TTL       SJ-3515          1    J2                           3-Conductor Jack with 2 break contacts (normals) and 2 auxiliary make contacts 
+ COM_PORT1_TTL       SJ-3515          1    J12                          3-Conductor Jack with 2 break contacts (normals) and 2 auxiliary make contacts 
+ Current charge meter1 TERMINAL2        1    J1                           Connector            
+ Current charge meter2 TERMINAL2        1    J4                           Connector            
+ Choke               R6-0805_N        3    L1, L2, L15                                       
+ DS1307              M08A_N           1    U10                                               
+ FIDUCIALMASK        FIDUCIALMASK     4    FID1, FID2, FID3, FID4                            
+ FR207               DO-214AB         2    D2, D3                                            
+ FUSE 15A            FUSE2            1    F1                           Fuse                 
+ FUSE 5A             FUSE2            1    F2                           Fuse                 
+ HEADER 5X2          10P_PCB_HEADER_BRD_MNT    1    J3                                                
+ Inductor            IND15X7          2    L8, L9                       Inductor             
+ Inductor            IND26X8          1    L7                           Inductor             
+ ISP                 10P_PCB_HEADER_BRD_MNT    1    J5                                                
+ LED_BAT             LED3mm           1    LED7                         Typical BLUE SiC LED 
+ LED_MDL             LED3mm           1    LED5                         Typical BLUE SiC LED 
+ LED_PW              LED3mm           1    LED6                         Typical BLUE SiC LED 
+ LM1117IMP-5V        MP04A_N          1    U17                          800mA Low-Dropout Linear Regulator, 4-pin SOT-223 
+ LM2576              TO-263-5         1    U13                                               
+ LMV358              M08A_N           3    U8, U15, U16                 Low Power Dual Operational Amplifier, 8-pin Narrow SOIC 
+ MOSFET-P            D2PAK-3          2    Q7, Q11                      P-Channel MOSFET     
+ N_BAT1              TERMINAL2        1    J11                          Connector 2          
+ N_BAT2              TERMINAL2        1    J10                          Connector 2          
+ NA                  C6-0805_N        1    C14                          Capacitor            
+ option              axial-0.3        1    L13                                               
+ PKD_LED             LED3mm           1    LED2                                              
+ PL3120 Module       ECHELONMODULE    1    MD1                          Connector            
+ RST PL              SW-4P-S          1    SW2                          Switch button 4 pin  
+ SER_PIN             SW-4P-S          1    SW1                          Switch button 4 pin  
+ SS24                DO-214AA         1    D19                          Hoangphat            
+ ST7920              LCD12864B        1    LCD1                         ST7920 LCD128X64     
+ SW-PB               CTCHIP_TO        6    S1, S2, S3, S4, S5, S6                            
+ TXON_LED            LED3mm           1    LED1                                              
+ VMAIN LED           led3mm           1    LED4                         Typical BLUE SiC LED 
+ Z12V                DO-35            2    D7, D18                      Zener Diode          
+ Z12V                SOD80, LL-34     2    D7A, D18A                    Zener Diode          
+ Z15V                DO-35            1    D14                          Zener Diode          
+ Z15V                SOT23-3          1    D14A                         Zener Diode          
+ Z9V                 SOD80, LL-34     2    D6, D11                      Zener Diode          
