@@ -4,6 +4,7 @@ Implementation of tasks
 Date created: 23/07/2008
 */
 #include <avr/io.h>
+#include "main.h"
 #include "schedule.h"
 #include "ds1307.h"
 #include "timming.h"
@@ -12,7 +13,7 @@ Date created: 23/07/2008
 #include "relays.h"
 
 //static vars
-unsigned char tasksTable[5][5];// __attribute__ ((section (".init1"))); 
+unsigned char tasksTable[5][5];// __attribute__ ((section (".noinit"))); 
 //static volatile unsigned char dimmingTimeTable[3][2]; //29-07-2009
 static volatile unsigned int sendStateTime[5]; // added 4/3/2009
 static volatile unsigned char currentTask,currentTask1;
@@ -35,7 +36,7 @@ void initSchedule(){
 			tasksTable[i][j] = 0;
 		}
 	}
-	readEEPROM(buffer,0,24);
+	eeprom_read_block(buffer,scheduleTasks,25);//readEEPROM(buffer,0,24);
 	for (i = 0; i< 5; i++){
 		for (j = 0; j< 5; j++){
 			tempTask[i][j] = buffer[i*5 + j];
@@ -47,11 +48,13 @@ void initSchedule(){
 				tasksTable[i][j] = buffer[i*5 + j];
 			}
 		}
-		readEEPROM(buffer,76,85);// added 4/3/2009	
+		//readEEPROM(buffer,76,85);// added 4/3/2009	
+		//eeprom_read_block(buffer,_sendStateTime,10);
 		for(i = 0;i<5;i++){
-			sendStateTime[i] = (unsigned char)buffer[i*2];
-			sendStateTime[i] <<= 8;
-			sendStateTime[i] |= (unsigned char)buffer[i*2+1]; 
+			//sendStateTime[i] = (unsigned char)buffer[i*2];
+			//sendStateTime[i] <<= 8;
+			//sendStateTime[i] |= (unsigned char)buffer[i*2+1];
+			sendStateTime[i] = eeprom_read_word(&_sendStateTime[i]); 
 		}
 		//check current time
 		readRealTime(&currentTime);
@@ -111,7 +114,9 @@ void initDecorateSchedule(void){//Decorate Light, Add 24/11/2010
 	char buffer1[43];
 	signed char tempSchedule1[14][3];
 	//read backup schedule
-	readEEPROM(buffer1,131,172);
+	eeprom_read_block(buffer1,decoTasksTable,42);
+	/*readEEPROM(buffer1,131,172);
+	*/
 	for (i = 0; i< 14; i++){
 		for (j = 0; j< 3; j++){
 			tempTask1[i][j] = buffer1[i*3 + j];
@@ -166,7 +171,8 @@ unsigned char setSchedule1(signed char tasks[14][3]){
 				buffer[i*3 + j] = tasks[i][j];
 			}
 		}
-		writeEEPROM(buffer,131,172);
+		eeprom_busy_wait();
+		eeprom_write_block(buffer,decoTasksTable,42);//writeEEPROM(buffer,131,172);
 		return 1;
 	}else{
 		return 0;
@@ -207,13 +213,15 @@ unsigned char setSchedule(signed char tasks[5][5],unsigned int sendTime[5]){
 				buffer[i*5 + j] = tasks[i][j];
 			}
 		}
-		writeEEPROM(buffer,0,24);
+		eeprom_busy_wait();
+		eeprom_write_block(buffer,scheduleTasks,25);//writeEEPROM(buffer,0,24);
 		for(i=0;i<5;i++){         // added 4/3/2009
 			sendStateTime[i] = sendTime[i];
 			buffer[2*i] = (char)(sendTime[i]>>8);
 			buffer[2*i+1] = (char)sendTime[i];
 		}
-		writeEEPROM(buffer,76,85);// added 4/3/2009
+		eeprom_busy_wait();
+		eeprom_write_block(buffer,_sendStateTime,10);//writeEEPROM(buffer,76,85);// added 4/3/2009
 		return 1;
 	}else{
 		return 0;

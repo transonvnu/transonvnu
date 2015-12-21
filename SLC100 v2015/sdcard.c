@@ -13,11 +13,11 @@
 #include "string1.h"
 
 //FILINFO finfo;
-FATFS __attribute__ ((section (".init1"))) fatfs;				/* File system object for each logical drive */
+FATFS __attribute__ ((section (".noinit"))) fatfs;				/* File system object for each logical drive */
 //FATFS fatfs;	
-//FIL __attribute__ ((section (".init1"))) file0;//,file1;
+//FIL __attribute__ ((section (".noinit"))) file0;//,file1;
 FIL file0;//,file1;
-char buff[500] __attribute__ ((section (".init1")));
+char buff[500] __attribute__ ((section (".noinit")));
 UINT nread,nwrite;
 
 void initSpiInOut(void){

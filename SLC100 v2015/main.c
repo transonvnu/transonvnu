@@ -64,31 +64,42 @@ Data Stack size     : 1024
 */
 uint8_t		scheduleTasks[5][5] EEMEM;
 uint32_t	phaseActiveEnergy[3] EEMEM;
-uint16_t	GSMmodemTimeOut EEMEM;
-uint16_t	logDataTime EEMEM;
+uint16_t EEMEM	GSMmodemTimeOut;
+uint16_t EEMEM	logDataTime;								//39 --> 40 : Write Log's time
 uint8_t		reserved[7] EEMEM;
-uint16_t	parTICoef1 EEMEM,parTICoef2 EEMEM;
-uint32_t	energyCalPar[3] EEMEM;
-uint16_t	voltageCalPar[3] EEMEM;
-uint16_t	ampereCalPar[3] EEMEM;
-uint16_t	TiCoefPar1 EEMEM, TiCoefPar2 EEMEM;
-uint16_t	_sendStateTime[5] EEMEM;
-uint8_t		centerServerPort[5] EEMEM;	// PORT	02015
-uint8_t		slc100ID[5]	EEMEM;			// ID		000xx
-uint8_t		serverStaticIP[4][3] EEMEM;	// IP		113.160.251.175
-uint8_t		slcPhoneNum[11]	EEMEM;		// Phone No 00915888888
-uint8_t		phaseCalib[3]	EEMEM;		//
-	
+uint32_t	energyCalPar[3] EEMEM = {22500,22500,22500};	//48 --> 71 : E,U,I Coeff Calibration
+uint16_t	voltageCalPar[3] EEMEM = {540,540,540};
+uint16_t	ampereCalPar[3] EEMEM = {555,555,555};
+uint16_t EEMEM	TiCoefPar1 = 200, EEMEM TiCoefPar2 = 50;	//
+uint16_t	_sendStateTime[5] EEMEM = {30,30,30,30,30};		//
+uint8_t		centerServerPort[5] EEMEM = {0,2,0,1,3};		// PORT	02013
+uint8_t		slc100ID[5]	EEMEM = {0,0,0,6,9};				// ID		000xx
+uint8_t		serverStaticIP[4][3] EEMEM	= {{1,1,3},{1,6,0},{2,5,1},{1,7,5}};	// IP		113.160.251.175
+uint8_t		slcPhoneNum[11]	EEMEM = {0,0,9,3,5,1,8,4,8,8,4};// Phone No 00915888888
+uint8_t		phaseCalib[3]	EEMEM = {0,0,0};							//???
+uint8_t		_Uvolt[3] EEMEM = {0,0,0};
+uint8_t		_h1m1h2m2h3m3[6] EEMEM = {0,0,0,0,0,0};
+uint8_t		decoTasksTable[14][3] EEMEM;
+uint8_t		nodesScheduleTable[MAX_GROUP_NODE][27] EEMEM = {
+	{0,0,100,5,0,0,17,0,100,18,0,100,19,0,100,20,0,100,21,0,100,22,0,100,23,0,100},
+	{0,0,100,5,0,0,17,0,100,18,0,100,19,0,100,20,0,100,21,0,100,22,0,100,23,0,100},
+	{0,0,100,5,0,0,17,0,100,18,0,100,19,0,100,20,0,100,21,0,100,22,0,100,23,0,100},
+	{0,0,100,5,0,0,17,0,100,18,0,100,19,0,100,20,0,100,21,0,100,22,0,100,23,0,100}	
+};
+uint8_t		nodesScheduleEnb[MAX_GROUP_NODE] EEMEM = {0,0,0,0};
+char dateCompiler[] PROGMEM = __DATE__;
+
+uint8_t groupNodeScheduleEnb[35];
 
 #define MAX_GROUP_NODE	4
 #define BIT(x)     (1<<x)
 
 #define DEBUG_MODE	0
 
-char args[600];// __attribute__ ((section (".init1")));
-char tBuffer[100];// __attribute__ ((section (".init1")));
+char args[600];// __attribute__ ((section (".noinit")));
+char tBuffer[100];// __attribute__ ((section (".noinit")));
 char SERVER_NUMBERS[12];
-//extern unsigned char RegBytes[10000] __attribute__ ((section (".init1")));
+//extern unsigned char RegBytes[10000] __attribute__ ((section (".noinit")));
 
 //char Uart_Select;
 
@@ -218,7 +229,7 @@ int main(void)
 		writeSystemLog(&timeReset,1,0,0,0,0,0,0);//System Reset
 		_delay_ms(100);
 		// Read Server's Numbers
-		readEEPROM(tBuffer,108,118);
+		eeprom_read_block(tBuffer,slcPhoneNum,11);//readEEPROM(tBuffer,108,118);
 		if(tBuffer[1] == 0){
 			for(i=1;i<11;i++){	
 				SERVER_NUMBERS[i-1] = tBuffer[i] + '0';
@@ -992,10 +1003,12 @@ int main(void)
 					//------storage node schedule in SLC-100 eeprom
 					if(args[2]==0xFF){	// if broadcast ID of node
 						for(i=0;i<MAX_GROUP_NODE;i++){
-							eeprom_write_block(args+4,(void*)(NODE_SCHEDULE_X+27*i),27);
+							eeprom_busy_wait();
+							eeprom_write_block(args+4,&nodesScheduleTable[i][0],27);
 						}
 					}else{
-						eeprom_write_block(args+4,(void*)NODE_SCHEDULE_X+27*(args[2]-1),27);	
+						eeprom_busy_wait();
+						eeprom_write_block(args+4,&nodesScheduleTable[args[2]-1][0],27);	
 					}
 					//-----end
 					messageBox(cmd);

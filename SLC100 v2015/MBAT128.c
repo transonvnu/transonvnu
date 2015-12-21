@@ -17,20 +17,20 @@
 
 volatile char Uart_Select = 0;
 //static volatile unsigned char queueUART1[MAX_QUEUE1];
-static volatile char queueUART1[MAX_QUEUE1] __attribute__ ((section (".init1")));
+static volatile char queueUART1[MAX_QUEUE1] __attribute__ ((section (".noinit")));
 static volatile unsigned int topQueue1, bottomQueue1;
 //extern unsigned char currentUart0;
 
 
-unsigned char pInBuff[MAX_IN_BUF] __attribute__ ((section (".init1")));
-unsigned char pOutBuff[MAX_OUT_BUF] __attribute__ ((section (".init1")));
+unsigned char pInBuff[MAX_IN_BUF] __attribute__ ((section (".noinit")));
+unsigned char pOutBuff[MAX_OUT_BUF] __attribute__ ((section (".noinit")));
 unsigned int nInBuffCount = 0;
 unsigned int nOutBuffCount = 0;
 unsigned int nByteSent = 0;
 
-//unsigned int outRegs[400] __attribute__ ((section (".init1")));
-unsigned char outBytes[100] __attribute__ ((section (".init1")));
-unsigned char RegBytes[10000] __attribute__ ((section (".init1")));
+//unsigned int outRegs[400] __attribute__ ((section (".noinit")));
+unsigned char outBytes[100] __attribute__ ((section (".noinit")));
+unsigned char RegBytes[10000] __attribute__ ((section (".noinit")));
 
 unsigned char nMBState = STATE_MB_INIT;
 unsigned int crc = 0;

@@ -8,6 +8,7 @@ Date created: 02/08/2008
 #include <avr/interrupt.h>
 #include <avr/wdt.h>
 #include "uart.h"
+#include "main.h"
 #include "sysComm.h"
 #include "timming.h"
 #include "string1.h" 
@@ -72,11 +73,12 @@ void interrupt_init(void){
 }
 //---------------------------------
 void initModemWatchDog(void){   //Used timer3 for 1.0Hz interrupt
-	char buffer[2]; 	
-	readEEPROM(buffer,37,38);	
-	modemTimeout = (unsigned char)buffer[0];
-	modemTimeout <<= 8;
-	modemTimeout |= (unsigned char)buffer[1];  
+	//char buffer[2]; 	
+	//readEEPROM(buffer,37,38);	
+	//modemTimeout = (unsigned char)buffer[0];
+	//modemTimeout <<= 8;
+	//modemTimeout |= (unsigned char)buffer[1];
+	modemTimeout = eeprom_read_word(&GSMmodemTimeOut);  
 	if((modemTimeout < 60)||(modemTimeout > 600)){//Neu Modem timeout < 30 giay hoac > 600 giay
 		setModemTimeout(30);						  //Add 06/08/2010	
 	}	
@@ -105,11 +107,13 @@ unsigned char getModemConnected(void){
 }	
 //--------------------------------
 void setModemTimeout(unsigned int time){//modem time out = time*10 seconds
-	char buffer[2];	
+	//char buffer[2];	
 	modemTimeout = ((int) time*10);
-	buffer[0] = (char)(modemTimeout >> 8);
-	buffer[1] = (char)(modemTimeout & 0x00ff);
-	writeEEPROM(buffer,37,38);
+	//buffer[0] = (char)(modemTimeout >> 8);
+	//buffer[1] = (char)(modemTimeout & 0x00ff);
+	//writeEEPROM(buffer,37,38);
+	eeprom_busy_wait();
+	eeprom_write_word(&GSMmodemTimeOut,modemTimeout);
 	Seconds = 0;
 }	
 //--------------------------------
@@ -356,7 +360,11 @@ unsigned char readCommand(char* args, char * cmd){
 				resetModemWatchDog();
 				break;
 			case 22://0x16 Doc cac thong so calib cua he thong - khong co noi dung
-				readEEPROM(str,48,71);//cE,cU,cI
+				//readEEPROM(str,48,71);//cE,cU,cI
+				eeprom_read_block(str,energyCalPar,12);
+				eeprom_read_block(str+12,voltageCalPar,6);
+				eeprom_read_block(str+18,ampereCalPar,6);
+				
 				for(i = 0;i<4;i++){
 					args[i] = str[3-i];//cE1 = xx xx xx xx MSBs first
 				} 
@@ -384,14 +392,20 @@ unsigned char readCommand(char* args, char * cmd){
 				for(i = 22;i<24;i++){
 					args[i] = str[45-i];//cI3 = xx xx  MSBs first
 				}	
-				readEEPROM(str,72,75);//TiCoeff1/TiCoeff2
+				//readEEPROM(str,72,75);//TiCoeff1/TiCoeff2
+				eeprom_read_block(str,&TiCoefPar1,2);
+				eeprom_read_block(str+2,&TiCoefPar2,2);
+				
 				for(i = 24;i<26;i++){
 					args[i] = str[25-i];//TiCoeff1 = xx xx  MSBs first
 				}
 				for(i = 26;i<28;i++){
 					args[i] = str[29-i];//TiCoeff2 = xx xx  MSBs first
 				}
-				readEEPROM(str,37,40);//modemTimeOut
+				//readEEPROM(str,37,40);//modemTimeOut
+				eeprom_read_block(str,&GSMmodemTimeOut,2);
+				//eeprom_read_block(str+2,&logDataTime,2);
+				
 				for(i = 28;i<30;i++){
 					args[i] = str[i-28];//modemTimeOut = xx xx  MSBs first
 				}
@@ -779,11 +793,13 @@ unsigned char isSdCardTime(void){
     else return 0;
 } 
 void writeLogTime(unsigned int time){//write log time = time*10 seconds
-	char buffer[2];	
+	//char buffer[2];	
 	logTime = ((int) time*10);
-	buffer[0] = (char)(logTime >> 8);
-	buffer[1] = (char)(logTime & 0x00ff);
-	writeEEPROM(buffer,39,40);
+	//buffer[0] = (char)(logTime >> 8);
+	//buffer[1] = (char)(logTime & 0x00ff);
+	//writeEEPROM(buffer,39,40);
+	eeprom_busy_wait();
+	eeprom_write_word(&logDataTime,logTime);
 }
 void setLogTime(unsigned int time){
 	logTime = time;

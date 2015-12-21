@@ -50,8 +50,8 @@
 //#define	START_MB_TIME35			ICR1  = TIME1CHAR35;	TCCR1B = 0x13;		//start t35 ,Fclk = 125 kHz
 
 
-extern unsigned char pInBuff[MAX_IN_BUF] __attribute__ ((section (".init1")));
-extern unsigned char pOutBuff[MAX_OUT_BUF] __attribute__ ((section (".init1")));
+extern unsigned char pInBuff[MAX_IN_BUF] __attribute__ ((section (".noinit")));
+extern unsigned char pOutBuff[MAX_OUT_BUF] __attribute__ ((section (".noinit")));
 extern unsigned int nInBuffCount ;
 extern unsigned int nOutBuffCount;
 extern unsigned char nMBState ;
@@ -59,9 +59,9 @@ extern unsigned int crc ;
 //extern unsigned char* pTempChar ;
 extern unsigned int nByteSent;
 
-//extern unsigned int outRegs[400] __attribute__ ((section (".init1")));
-extern unsigned char outBytes[100] __attribute__ ((section (".init1")));
-extern unsigned char RegBytes[10000] __attribute__ ((section (".init1")));
+//extern unsigned int outRegs[400] __attribute__ ((section (".noinit")));
+extern unsigned char outBytes[100] __attribute__ ((section (".noinit")));
+extern unsigned char RegBytes[10000] __attribute__ ((section (".noinit")));
 
 
 void mb_crc (unsigned char* buf,unsigned  char cnt);

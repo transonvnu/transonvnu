@@ -20,8 +20,8 @@ Date created: 24/07/2008
 
 //static volatile unsigned char queueUART1[MAX_QUEUE1];	//receiver queue
 //static volatile unsigned char * queueUART2 = (unsigned char*)0x1400;
-//static volatile unsigned char queueUART2[MAX_QUEUE2];//,queueUART1[MAX_QUEUE1];// __attribute__ ((section (".init1")));
-static volatile unsigned char queueUART2[MAX_QUEUE2];// __attribute__ ((section (".init1")));
+//static volatile unsigned char queueUART2[MAX_QUEUE2];//,queueUART1[MAX_QUEUE1];// __attribute__ ((section (".noinit")));
+static volatile unsigned char queueUART2[MAX_QUEUE2];// __attribute__ ((section (".noinit")));
 //static volatile unsigned int topQueue1, bottomQueue1, topQueue2, bottomQueue2;
 static volatile unsigned int topQueue2, bottomQueue2;
 

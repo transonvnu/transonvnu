@@ -25,14 +25,17 @@ void changeDecorateLightSchedule(char * command);
 void changeStreetLightSchedule(char * command);
 void convertDay(char day,char * buffer);
 void changeTimeDate(char * command);
-void terminal(char * command);
+void modemSettings(char * command);
 void calibADE(void);
-void settings(char * command);
+void calibrationSCR(char * command);
 void lightControl(char * command);
 void menu(char * command);
 unsigned char readButtonCommand(char * args);
 void clearButtonCmd(void);
 void draw_table(void);
 void nodesSchedule(char * command);
+void controlNodes(char * command);
+void setNodesSchedule(char * command);
+void deviceInfor(char * command);
 
 #endif

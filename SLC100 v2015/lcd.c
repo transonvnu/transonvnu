@@ -23,7 +23,7 @@
 #include "font3.c"
 #include "font1.c"
 #include "font4.c"
-#include "icon.c"
+#include "icon.h"
 //#include "SOAP.h"
 #include "tff.h"
 #include "MBAT128.h"
@@ -35,19 +35,22 @@
 
 #define mainScreen 			        0 
 #define menuScreen 			        1
-#define settingScreen 		        2
+#define calibrationScreen 		        2
 #define scheduleScreen 		        3
 #define timeScreen	 		        4
-#define gameScreen	 		        5
-#define sdcardScreen	 	        6
+#define nodeMonitorScreen	 		        5
+#define settingsScreen	 	        6
 #define terminalScreen	 	        7
 #define lightControlScreen	        8
 #define streetLightScheduleScreen   9   //add 11/11/2010
 #define	decorateLightScheduleScreen 10	//add 11/11/2010
 #define nodesScheduleScreen			11	//add 12/2015
+#define controlNodesScreen			12
+#define setNodesScheduleScreen		13
+#define informationScreen			14
 
-extern unsigned char RegBytes[] __attribute__ ((section (".init1")));
-signed char schedule1[14][3];//  __attribute__ ((section (".init1")));
+extern unsigned char RegBytes[] __attribute__ ((section (".noinit")));
+signed char schedule1[14][3];//  __attribute__ ((section (".noinit")));
 char autoResetModem = 1;
 static unsigned char screen,pressButton;
 static unsigned char lightStatus,lastlightStatus,currentMenu,lastMenu;
@@ -60,11 +63,11 @@ signed char schedule[5][5];
 unsigned char changeTimePoiter,changeSchedulePoiter,changeTiPoiter,configPoiter,passSecurity,countPassWord;
 unsigned int  TICoef1,TICoef2;
 int cU[3],cI[3],pageDisplay;
-char dimPoiter,config[36];// __attribute__ ((section (".init1")));
-static long  cE[3];// __attribute__ ((section (".init1")));
+char dimPoiter,config[36];// __attribute__ ((section (".noinit")));
+static long  cE[3];// __attribute__ ((section (".noinit")));
 //long  cE[3];
 int  tM,tL;
-long  E1,E2,E3,A1,A2,A3;// __attribute__ ((section (".init1")));
+long  E1,E2,E3,A1,A2,A3;// __attribute__ ((section (".noinit")));
 
 extern char SERVER_NUMBERS[12];
 char realTimeError;
@@ -81,6 +84,7 @@ unsigned char dPF[3];//Display Power Factor
 unsigned int dU[3],dI[3];//Display U,I,E
 unsigned long dE[3];
 
+prog_char node_Schedule_default[] = {0,0,100,5,0,0,17,0,100,18,0,100,19,0,100,20,0,100,21,0,100,22,0,100,23,0,100};
 prog_char flush_space[] = "                                ";
 prog_char slcSchedule_str[] = "STREET LIGHT SCHEDULE";
 prog_char ok_str[] = "OK";
@@ -95,7 +99,7 @@ void initKeyboard(void){
 	DDRC |= 0x80;//LCD backLight 
 	screen = 0;
 	pressButton = 0;
-	key[0]=0;key[1]=0;key[2]=0;key[3]=0;key[4]=0;key[5]=0;
+	KEY_LEFT=0;KEY_RIGHT=0;KEY_UP=0;KEY_DOWN=0;KEY_OK=0;key[5]=0;
 	currentMenu=0;
 	buttonCmd = 255;
 	resetEnergy = -1;
@@ -268,11 +272,11 @@ void DisplayLightStatus(unsigned char status){
 }
 void DisplayDecorateLightStatus(unsigned char status){
 	if(status == 1){
-		lcd_print3(190,77," ON ",&f3,0,0);
+		lcd_print3(190,77,"K3: ON ",&f3,0,0);
 		//lcd_print3(180,37,"        ",&f4,0,0);
 		//lcd_print3(4,77
 	}else{
-		lcd_print3(190,77," OFF",&f3,0,0);
+		lcd_print3(190,77,"K3: OFF",&f3,0,0);
 		//lcd_print3(180,37,"        ",&f4,0,0);
 	}
 }
@@ -286,16 +290,17 @@ unsigned char getScreen(void){
 	return screen;
 }
 
-void terminal(char * command){
+void modemSettings(char * command){
 
-	unsigned long Pow[3];
+	//unsigned long Pow[3];
 	if(screen != terminalScreen){
 		screen = terminalScreen;
 		lcd_clear_graph();    		 // clear graphics memory of LCD
 		lcd_clear_text();  		     // clear text memory of LCD
+		lcd_print3(20,0,"MODEM SETTING",&f3,0,0);
 		lcd_print3(5,20,"Auto Reset Modem :",&f3,0,0);
 		//Add 05/08/2010 ************************
-		lcd_print3(50,40,"Power(W)",&f3,0,0);
+		/*lcd_print3(50,40,"Power(W)",&f3,0,0);
 		lcd_print3(150,40,"Energy(kWh)",&f3,0,0);
 		lcd_print3(5,60,"Phase1:",&f3,0,0);
 		lcd_print3(5,80,"Phase2:",&f3,0,0);
@@ -312,6 +317,7 @@ void terminal(char * command){
 		DisplayNumber(150,60,dE[0]);
 		DisplayNumber(150,80,dE[1]);
 		DisplayNumber(150,100,dE[2]);
+		*/
 		//***************************************
 		if(autoResetModem == 1){
 			lcd_print4(116,20,"YES",&f3,0,0);
@@ -321,13 +327,13 @@ void terminal(char * command){
 		}
 	}
 	else {
-		if(key[0]){
+		if(KEY_LEFT){
 			autoResetModem = -1*autoResetModem;
-			key[0] = 0;
+			KEY_LEFT = 0;
 		}
-		if(key[1]){
+		if(KEY_RIGHT){
 			autoResetModem = -1*autoResetModem;
-			key[1] = 0;
+			KEY_RIGHT = 0;
 		}
 		if(autoResetModem == 1){
 			lcd_print4(116,20,"YES",&f3,0,0);
@@ -357,23 +363,23 @@ void changeSchedule(char * command){
 		lcd_print3(10,114,buffer,&f3,0,0);
 	}
 	else {
-		if(key[1]){//Righ
-			key[1] = 0;
+		if(KEY_RIGHT){//Righ
+			KEY_RIGHT = 0;
 			if(changeSchedulePoiter == 1) changeSchedulePoiter = 0;
 			else changeSchedulePoiter = 1;
 		}
-		if(key[0]){//Left
-			key[0] = 0;
+		if(KEY_LEFT){//Left
+			KEY_LEFT = 0;
 			if(changeSchedulePoiter == 1) changeSchedulePoiter = 0;
 			else changeSchedulePoiter = 1;
 		}
-		if(key[3]){//Down
-			key[3] = 0;
+		if(KEY_DOWN){//Down
+			KEY_DOWN = 0;
 			if(changeSchedulePoiter == 1) changeSchedulePoiter = 0;
 			else changeSchedulePoiter = 1;
 		}
-		if(key[2]){//Up
-			key[2] = 0;
+		if(KEY_UP){//Up
+			KEY_UP = 0;
 			if(changeSchedulePoiter == 1) changeSchedulePoiter = 0;
 			else changeSchedulePoiter = 1;
 		}
@@ -388,8 +394,8 @@ void changeSchedule(char * command){
 			sprintf_P(buffer,PSTR("DECORATE LIGHT SCHEDULE"));
 			lcd_print4(32,45,buffer,&f3,0,0);
 		}
-		if(key[4]){
-			key[4] = 0;
+		if(KEY_OK){
+			KEY_OK = 0;
 			lcd_print3(210,114,space_flush1,&f3,0,0);
 			lcd_print3(211,115,ok_str1,&f3,0,0);
 			_delay_ms(100);
@@ -448,7 +454,8 @@ void changeDecorateLightSchedule(char * command){
 		lcd_line(37,19,37,115,1);
 		lcd_line(98,19,98,115,1);
 		lcd_line(159,19,159,115,1);
-		readEEPROM(buffer,131,172);
+		eeprom_busy_wait();
+		eeprom_read_block(buffer,decoTasksTable,14*3);//readEEPROM(buffer,131,172);
 		for (i = 0; i< 14; i++){
 			for (j = 0; j< 3; j++){
 				schedule1[i][j] = buffer[i*3 + j];
@@ -482,17 +489,17 @@ void changeDecorateLightSchedule(char * command){
 				
 	}
 	else {
-		if(key[1]){//Righ
+		if(KEY_RIGHT){//Righ
 			changeSchedulePoiter++;
-			key[1] = 0;
+			KEY_RIGHT = 0;
 			if(changeSchedulePoiter >= 35) changeSchedulePoiter = 0;
 		}
-		if(key[0]){//Left
+		if(KEY_LEFT){//Left
 			changeSchedulePoiter--;
-			key[0] = 0;
+			KEY_LEFT = 0;
 			if(changeSchedulePoiter == 255) changeSchedulePoiter = 34;
 		}
-		if(key[3]){//Down
+		if(KEY_DOWN){//Down
 			for(i=0;i<7;i++){
 				if(i*5 == changeSchedulePoiter){
 					if(schedule1[i*2][2] == 0)	schedule1[i*2][2] = 1;
@@ -515,9 +522,9 @@ void changeDecorateLightSchedule(char * command){
 					if(schedule1[2*i+1][1] <= -1) schedule1[2*i+1][1] = 59;
 				}
 			}
-			key[3] = 0;
+			KEY_DOWN = 0;
 		}
-		if(key[2]){//Up
+		if(KEY_UP){//Up
 			for(i=0;i<7;i++){
 				if(i*5 == changeSchedulePoiter){
 					if(schedule1[i*2][2] == 0)	schedule1[i*2][2] = 1;
@@ -540,7 +547,7 @@ void changeDecorateLightSchedule(char * command){
 					if(schedule1[2*i+1][1] >= 60) schedule1[2*i+1][1] = 0;
 				}
 			}
-			key[2] = 0;
+			KEY_UP = 0;
 		}
 		for (i = 0; i< 7; i++){				
 			sprintf(buffer,"%02u",schedule1[2*i][0]);//gio i
@@ -579,8 +586,8 @@ void changeDecorateLightSchedule(char * command){
 				lcd_print3(56,32+12*i,buffer,&f3,0,0);
 				
 		}
-		if(key[4]){
-			key[4] = 0;
+		if(KEY_OK){
+			KEY_OK = 0;
 			for(i = 0;i<7;i++){
 				schedule1[2*i+1][2] = 0;
 			}
@@ -666,17 +673,17 @@ void changeStreetLightSchedule(char * command){
 		lcd_line(230,20,230,110,1);
 	}
 	else {
-		if(key[1]){//Righ
+		if(KEY_RIGHT){//Righ
 			changeSchedulePoiter++;
-			key[1] = 0;
+			KEY_RIGHT = 0;
 			if(changeSchedulePoiter >= 15) changeSchedulePoiter = 0;
 		}
-		if(key[0]){//Left
+		if(KEY_LEFT){//Left
 			changeSchedulePoiter--;
-			key[0] = 0;
+			KEY_LEFT = 0;
 			if(changeSchedulePoiter == 255) changeSchedulePoiter = 14;
 		}
-		if(key[3]){//Down
+		if(KEY_DOWN){//Down
 			switch (changeSchedulePoiter){
 				case 0:
 					schedule[0][0] -= 1;
@@ -741,9 +748,9 @@ void changeStreetLightSchedule(char * command){
 				default : 	
 					break;
 			}
-			key[3] = 0;
+			KEY_DOWN = 0;
 		}
-		if(key[2]){//Up
+		if(KEY_UP){//Up
 			switch (changeSchedulePoiter){
 				case 0:
 					schedule[0][0] += 1;
@@ -808,7 +815,7 @@ void changeStreetLightSchedule(char * command){
 				default : 	
 					break;
 			}
-			key[2] = 0;
+			KEY_UP = 0;
 		}
 		for (i = 0; i< 5; i++){				
 			sprintf(buffer,"%02u",schedule[i][0]);//gio i
@@ -843,15 +850,16 @@ void changeStreetLightSchedule(char * command){
 				lcd_print3(146,38+15*i,buffer,&f3,0,0);
 				
 		}
-		if(key[4]){
-			key[4] = 0;
+		if(KEY_OK){
+			KEY_OK = 0;
 			for(i=0;i<4;i++){
 				schedule[i][2] =  schedule[i+1][0];
 				schedule[i][3] =  schedule[i+1][1];
 			}
 			schedule[4][2] =  schedule[0][0];
 			schedule[4][3] =  schedule[0][1];
-			readEEPROM(buffer,76,85);
+			eeprom_busy_wait();
+			eeprom_read_block(buffer,_sendStateTime,10);	//readEEPROM(buffer,76,85);
 			for(i=0;i<5;i++){
 				sendStateTime[i] = (unsigned char)buffer[2*i];
 				sendStateTime[i] <<= 8;
@@ -935,28 +943,28 @@ void changeTimeDate(char * command){//Edit 22/11/2010 add day
 		convertDay(time.day,buffer);
 		//sprintf(buffer,"%02u",time.day);
 		lcd_print3(57,80,buffer,&f3,0,0);
-		lcd_print3(80,80," / ",&f3,0,0);
+		lcd_print3(80,80," - ",&f3,0,0);
 		sprintf(buffer,"%02u",time.date);
 		lcd_print3(97,80,buffer,&f3,0,0);
-		lcd_print3(112,80," / ",&f3,0,0);
+		lcd_print3(112,80," - ",&f3,0,0);
 		sprintf(buffer,"%02u",time.month);
 		lcd_print3(130,80,buffer,&f3,0,0);
-		lcd_print3(145,80," / ",&f3,0,0);
+		lcd_print3(145,80," - ",&f3,0,0);
 		sprintf(buffer,"%02u",time.year);
 		lcd_print3(162,80,buffer,&f3,0,0);
 	}
 	else {
-		if(key[1]){//Righ
+		if(KEY_RIGHT){//Righ
 			changeTimePoiter++;
-			key[1] = 0;
+			KEY_RIGHT = 0;
 			if(changeTimePoiter >= 6) changeTimePoiter = 0;
 		}
-		if(key[0]){//Left
+		if(KEY_LEFT){//Left
 			changeTimePoiter--;
-			key[0] = 0;
+			KEY_LEFT = 0;
 			if(changeTimePoiter == 255) changeTimePoiter = 5;
 		}
-		if(key[3]){//Down
+		if(KEY_DOWN){//Down
 			switch (changeTimePoiter){
 				case 0:
 					time.hour -= 1;
@@ -985,9 +993,9 @@ void changeTimeDate(char * command){//Edit 22/11/2010 add day
 				default : 	
 					break;
 			}
-			key[3] = 0;
+			KEY_DOWN = 0;
 		}
-		if(key[2]){//Up
+		if(KEY_UP){//Up
 			switch (changeTimePoiter){
 				case 0:
 					time.hour += 1;
@@ -997,7 +1005,7 @@ void changeTimeDate(char * command){//Edit 22/11/2010 add day
 					time.minute += 1;
 					if(time.minute >= 60) time.minute = 0;
 					break;
-				case 2:
+				case 2:										// day in week
 					time.day += 1;
 					if(time.day >= 8) time.day = 1;
 					break;
@@ -1016,7 +1024,7 @@ void changeTimeDate(char * command){//Edit 22/11/2010 add day
 				default : 	
 					break;
 			}
-			key[2] = 0;
+			KEY_UP = 0;
 		}
 		if(changeTimePoiter==0){//hour
 			sprintf(buffer,"%02u",time.year);
@@ -1066,10 +1074,10 @@ void changeTimeDate(char * command){//Edit 22/11/2010 add day
 			sprintf(buffer,"%02u",time.year);
 			lcd_print4(162,80,buffer,&f3,0,0);
 		}
-		if(key[4]){ // OK
-			key[4] = 0;
+		if(KEY_OK){ // OK
+			KEY_OK = 0;
 			time.second = 0;
-			time.day = 0;
+			//time.day = 0;
 			if(writeRealTime(&time)){
 				realTimeError = 0;//Reset Error
 				getSchedule(tTasksTable,tempSendTime);
@@ -1097,52 +1105,31 @@ void changeTimeDate(char * command){//Edit 22/11/2010 add day
 	}
 
 }
-void sdCard(char * command){
+void settingsSCR(char * command){
 	int i;
 	char buffer[20];
 	unsigned int PORT,ID;
 	unsigned char temp;
-	unsigned long free = 0,total = 0,user = 0;
-	if(screen != sdcardScreen){
+	if(screen != settingsScreen){
 
-		screen = sdcardScreen;
+		screen = settingsScreen;
 		lcd_clear_graph();    		 // clear graphics memory of LCD
-		lcd_clear_text();  		     // clear text memory of LCD
-		
+		lcd_clear_text();  		     // clear text memory of LCD		
+		sprintf_P(buffer,PSTR("SETTINGS"));
+		lcd_print3(60,0,buffer,&f3,0,0);
 		sprintf_P(buffer,PSTR("SET PORT:"));
 		lcd_print3(5,20,buffer,&f3,0,0);
 		sprintf_P(buffer,PSTR("SET ID:"));
-		lcd_print3(5,35,buffer,&f3,0,0);
+		lcd_print3(5,30,buffer,&f3,0,0);
 		sprintf_P(buffer,PSTR("SET SV IP:"));
-		lcd_print3(5,50,buffer,&f3,0,0);
+		lcd_print3(5,40,buffer,&f3,0,0);
 		sprintf_P(buffer,PSTR("SET SV NUM:"));
-		lcd_print3(5,65,buffer,&f3,0,0);
-		sprintf_P(buffer,PSTR("SD CARD INFO:"));
-		lcd_print3(5,80,buffer,&f3,0,0);
-		sprintf_P(buffer,PSTR("TOTAL:"));
-		lcd_print3(50,95,buffer,&f3,0,0);
-		sprintf_P(buffer,PSTR("FREE:"));
-		lcd_print3(50,110,buffer,&f3,0,0);
-		total = checkCapacitor(&free,&user);
-		if(total < 10){
-			sprintf_P(buffer,PSTR("NOT INSERTED"));
-			lcd_print3(90,80,buffer,&f3,0,0);	
-		}else{
-			sprintf_P(buffer,PSTR("INSERTED"));
-			lcd_print3(90,80,buffer,&f3,0,0);
-		}
-		//ltoa(total/1024,buffer,10);
-		dwordToString(total/1024,buffer);
-		lcd_print3(90,95,buffer,&f3,0,0);
-		//ltoa(free/1024,buffer,10);
-		dwordToString(free/1024,buffer);
-		lcd_print3(90,110,buffer,&f3,0,0);
-		sprintf_P(buffer,PSTR("kB"));
-		lcd_print3(150,95,buffer,&f3,0,0);
-		sprintf_P(buffer,PSTR("kB"));
-		lcd_print3(150,110,buffer,&f3,0,0);
-
-		readEEPROM(config,86,118);
+		lcd_print3(5,50,buffer,&f3,0,0);
+		eeprom_busy_wait();
+		eeprom_read_block(config,centerServerPort,5);	//readEEPROM(config,86,118);
+		eeprom_read_block(config+5,slc100ID,5);
+		eeprom_read_block(config+10,serverStaticIP,12);
+		eeprom_read_block(config+22,slcPhoneNum,11);
 		for(i=0;i<33;i++){
 			if((config[i] < 0)||(config[i] > 9)){
 				config[0] = 0;config[1] = 4;config[2] = 0;config[3] = 0;config[4] = 0;//Default PORT: 4000
@@ -1153,7 +1140,15 @@ void sdCard(char * command){
 				config[19] = 0;config[20] = 1;config[21] = 2;//012
 				config[22] = 0;config[23] = 0;config[24] = 9;config[25] = 1;config[26] = 5;config[27] = 8;
 				config[28] = 8;config[29] = 8;config[30] = 8;config[31] = 8;config[32] = 8;//00915888888
-				writeEEPROM(config,86,118);
+				//writeEEPROM(config,86,118);
+				eeprom_busy_wait();
+				eeprom_write_block(config,centerServerPort,5);
+				eeprom_busy_wait();
+				eeprom_write_block(config+5,slc100ID,5);
+				eeprom_busy_wait();
+				eeprom_write_block(config+10,serverStaticIP,12);
+				eeprom_busy_wait();
+				eeprom_write_block(config+22,slcPhoneNum,11);
 				break;
 			}
 		}
@@ -1163,51 +1158,51 @@ void sdCard(char * command){
 		}
 		for(i=5;i<10;i++){	
 			sprintf(buffer,"%01u",config[i]);
-			lcd_print3(80+8*(i-5),35,buffer,&f3,0,0);
+			lcd_print3(80+8*(i-5),30,buffer,&f3,0,0);
 		}
 		for(i=10;i<13;i++){
 			sprintf(buffer,"%01u",config[i]);
-			lcd_print3(80+8*(i-10),50,buffer,&f3,0,0);
+			lcd_print3(80+8*(i-10),40,buffer,&f3,0,0);
 		}
-		lcd_print3(80+8*(i-10),50,".",&f3,0,0);
+		lcd_print3(80+8*(i-10),40,".",&f3,0,0);
 		for(i=13;i<16;i++){
 			sprintf(buffer,"%01u",config[i]);
-			lcd_print3(88+8*(i-10),50,buffer,&f3,0,0);
+			lcd_print3(88+8*(i-10),40,buffer,&f3,0,0);
 		}
-		lcd_print3(88+8*(i-10),50,".",&f3,0,0);
+		lcd_print3(88+8*(i-10),40,".",&f3,0,0);
 		for(i=16;i<19;i++){
 			sprintf(buffer,"%01u",config[i]);
-			lcd_print3(96+8*(i-10),50,buffer,&f3,0,0);
+			lcd_print3(96+8*(i-10),40,buffer,&f3,0,0);
 		}
-		lcd_print3(96+8*(i-10),50,".",&f3,0,0);
+		lcd_print3(96+8*(i-10),40,".",&f3,0,0);
 		for(i=19;i<22;i++){
 			sprintf(buffer,"%01u",config[i]);
-			lcd_print3(104+8*(i-10),50,buffer,&f3,0,0);
+			lcd_print3(104+8*(i-10),40,buffer,&f3,0,0);
 		}	
 		for(i=22;i<33;i++){
 			sprintf(buffer,"%01u",config[i]);
-			lcd_print3(80+8*(i-22),65,buffer,&f3,0,0);
+			lcd_print3(80+8*(i-22),50,buffer,&f3,0,0);
 		}	
 		lcd_print3(10,114,"BACK",&f3,0,0);
 		lcd_print3(210,114,ok_str1,&f3,0,0);
 
 		configPoiter = 0;
-		passSecurity = 1;
+		passSecurity = 0;
 		countPassWord = 0;
 	}
 	else {
 		if(passSecurity == 1){
-			if(key[0]){//Left
+			if(KEY_LEFT){//Left
 				configPoiter--;
-				key[0] = 0;
+				KEY_LEFT = 0;
 				if(configPoiter == 255) configPoiter = 32;
 			}
-			if(key[1]){//Righ
+			if(KEY_RIGHT){//Righ
 				configPoiter++;
-				key[1] = 0;
+				KEY_RIGHT = 0;
 				if(configPoiter >= 33) configPoiter = 0;
 			}
-			if(key[3]){//Down
+			if(KEY_DOWN){//Down
 				config[configPoiter] -= 1;
 				if((configPoiter==10)||(configPoiter==13)||(configPoiter==16)||(configPoiter==19)){
 					if(config[configPoiter] < 0) config[configPoiter] = 2;	
@@ -1215,9 +1210,9 @@ void sdCard(char * command){
 				else{
 					if(config[configPoiter] < 0) config[configPoiter] = 9;
 				}	
-				key[3] = 0;
+				KEY_DOWN = 0;
 			}
-			if(key[2]){//Up
+			if(KEY_UP){//Up
 				config[configPoiter] += 1;
 				if((configPoiter==10)||(configPoiter==13)||(configPoiter==16)||(configPoiter==19)){
 					if(config[configPoiter] > 2) config[configPoiter] = 0;	
@@ -1225,7 +1220,7 @@ void sdCard(char * command){
 				else{
 					if(config[configPoiter] > 9) config[configPoiter] = 0;
 				}	
-				key[2] = 0;
+				KEY_UP = 0;
 			}
 			for(i=0;i<5;i++){
 				sprintf(buffer,"%01u",config[i]);
@@ -1237,55 +1232,63 @@ void sdCard(char * command){
 			for(i=5;i<10;i++){
 				sprintf(buffer,"%01u",config[i]);
 				if(i == configPoiter)
-					lcd_print4(80+8*(i-5),35,buffer,&f3,0,0);
+					lcd_print4(80+8*(i-5),30,buffer,&f3,0,0);
 				else
-					lcd_print3(80+8*(i-5),35,buffer,&f3,0,0);
+					lcd_print3(80+8*(i-5),30,buffer,&f3,0,0);
 			}
 			for(i=10;i<13;i++){
 				sprintf(buffer,"%01u",config[i]);
 				if(i == configPoiter)
-					lcd_print4(80+8*(i-10),50,buffer,&f3,0,0);
+					lcd_print4(80+8*(i-10),40,buffer,&f3,0,0);
 				else
-					lcd_print3(80+8*(i-10),50,buffer,&f3,0,0);
+					lcd_print3(80+8*(i-10),40,buffer,&f3,0,0);
 			}
 			for(i=13;i<16;i++){
 				sprintf(buffer,"%01u",config[i]);
 				if(i == configPoiter)
-					lcd_print4(88+8*(i-10),50,buffer,&f3,0,0);
+					lcd_print4(88+8*(i-10),40,buffer,&f3,0,0);
 				else
-					lcd_print3(88+8*(i-10),50,buffer,&f3,0,0);
+					lcd_print3(88+8*(i-10),40,buffer,&f3,0,0);
 			}
 			for(i=16;i<19;i++){
 				sprintf(buffer,"%01u",config[i]);
 				if(i == configPoiter)
-					lcd_print4(96+8*(i-10),50,buffer,&f3,0,0);
+					lcd_print4(96+8*(i-10),40,buffer,&f3,0,0);
 				else
-					lcd_print3(96+8*(i-10),50,buffer,&f3,0,0);
+					lcd_print3(96+8*(i-10),40,buffer,&f3,0,0);
 			}
 			for(i=19;i<22;i++){
 				sprintf(buffer,"%01u",config[i]);
 				if(i == configPoiter)
-					lcd_print4(104+8*(i-10),50,buffer,&f3,0,0);
+					lcd_print4(104+8*(i-10),40,buffer,&f3,0,0);
 				else
-					lcd_print3(104+8*(i-10),50,buffer,&f3,0,0);
+					lcd_print3(104+8*(i-10),40,buffer,&f3,0,0);
 			}
 			for(i=22;i<33;i++){//server's numbers
 				sprintf(buffer,"%01u",config[i]);
 				if(i == configPoiter)
-					lcd_print4(80+8*(i-22),65,buffer,&f3,0,0);
+					lcd_print4(80+8*(i-22),50,buffer,&f3,0,0);
 				else
-					lcd_print3(80+8*(i-22),65,buffer,&f3,0,0);
+					lcd_print3(80+8*(i-22),50,buffer,&f3,0,0);
 				
 			}
 			
-			if(key[4]){ // OK
-				key[4] = 0;
+			if(KEY_OK){ // OK
+				KEY_OK = 0;
 				PORT = (unsigned int)config[0]*10000+(unsigned int)config[1]*1000
 			 			+ (unsigned int)config[2]*100  +(unsigned int)config[3]*10 + (unsigned int)config[4];
 				ID   = (unsigned int)config[5]*10000+(unsigned int)config[6]*1000
 			 			+ (unsigned int)config[7]*100  +(unsigned int)config[8]*10 + (unsigned int)config[9];
-				writeEEPROM(config,86,118);
-
+				//writeEEPROM(config,86,118);
+				eeprom_busy_wait();
+				eeprom_write_block(config,centerServerPort,5);
+				eeprom_busy_wait();
+				eeprom_write_block(config+5,slc100ID,5);
+				eeprom_busy_wait();
+				eeprom_write_block(config+10,serverStaticIP,12);
+				eeprom_busy_wait();
+				eeprom_write_block(config+22,slcPhoneNum,11);
+				
 				wordToString(PORT,buffer);
 				writeStringUART2("AT+Setsvport=\"");
 				writeMStringUART2(buffer);
@@ -1338,35 +1341,35 @@ void sdCard(char * command){
     	}
 		else {//check security password
 			// ***** U U D D Enter ******************************
-			if(key[2]){ //up
-				key[2] = 0;
-				if((countPassWord == 0)||(countPassWord == 1))
+			if(KEY_UP){ //up
+				KEY_UP = 0;
+				if(countPassWord == 0)
 					countPassWord++;
 				else
 					countPassWord = 0;
 			}
-			if(key[3]){ //down
-				key[3] = 0;
-				if((countPassWord == 2)||(countPassWord == 3))
+			if(KEY_DOWN){ //down
+				KEY_DOWN = 0;
+				if(countPassWord == 1)
 					countPassWord++;
 				else
 					countPassWord = 0;
 			}
-			if(key[0]){ //left
-				key[0] = 0;
+			if(KEY_LEFT){ //left
+				KEY_LEFT = 0;
 				countPassWord = 0;
 			}
-			if(key[1]){ //Right
-				key[1] = 0;
+			if(KEY_RIGHT){ //Right
+				KEY_RIGHT = 0;
 				countPassWord = 0;
 			}
-			if(key[4]){
-				key[4] = 0;
-				if(countPassWord==4)	
+			if(KEY_OK){
+				KEY_OK = 0;
+				if(countPassWord==2)	
 					countPassWord++;
 				else	countPassWord = 0;
 			}
-			if(countPassWord == 5){
+			if(countPassWord == 3){
 				passSecurity = 1;
 				countPassWord = 0;	
 			}
@@ -1375,13 +1378,12 @@ void sdCard(char * command){
 	}
 
 }//End SD Card
-void game(char * command){
+void nodeMonitor(char * command){
 	int i,j;
 	char buffer[20];
 	//unsigned char temp;
-	if(screen != gameScreen){
-
-		screen = gameScreen;
+	if(screen != nodeMonitorScreen){
+		screen = nodeMonitorScreen;
 		pageDisplay = 0;
 		lcd_clear_graph();    		 // clear graphics memory of LCD
 		lcd_clear_text();  		     // clear text memory of LCD
@@ -1393,8 +1395,8 @@ void game(char * command){
 		}
 	}
 	else {
-		if(key[0]){ //left
-			key[0] = 0;
+		if(KEY_LEFT){ //left
+			KEY_LEFT = 0;
 			pageDisplay -= 1; 
 			if(pageDisplay < 0){
 				pageDisplay = (MAX_NODE/11)-1;
@@ -1408,8 +1410,8 @@ void game(char * command){
 				lcd_print3(5,i*10,buffer,&f3,0,0);
 			}
 		}
-		if(key[1]){ //Right
-			key[1] = 0;
+		if(KEY_RIGHT){ //Right
+			KEY_RIGHT = 0;
 			pageDisplay += 1; 
 			if(pageDisplay >= MAX_NODE/11){
 				pageDisplay = 0;
@@ -1436,34 +1438,37 @@ void game(char * command){
 	}
 }//End game
 
-void settings(char * command){
+void calibrationSCR(char * command){
 	unsigned char i=0;
 	char buffer[18];
-	char str[28];
+	//char str[28];
 	unsigned int current;
 	unsigned long CF_Scall;
 	EnergySruct Energy;
-	if(screen != settingScreen){
-		screen = settingScreen;
+	if(screen != calibrationScreen){
+		screen = calibrationScreen;
 		lcd_clear_graph();    		 // clear graphics memory of LCD
 		lcd_clear_text();  		     // clear text memory of LCD
-		readEEPROM(str,37,40);	
-		tM = (unsigned char)str[0];
-		tM <<= 8;
-		tM |= (unsigned char)str[1];
-		//tL = str[2]*256 + str[3];
+		//readEEPROM(str,37,40);	
+		//tM = (unsigned char)str[0];
+		//tM <<= 8;
+		//tM |= (unsigned char)str[1];
+		eeprom_busy_wait();
+		tM = eeprom_read_word(&GSMmodemTimeOut);
+		//tL = eeprom_read_word(&logDataTime);
 		//readEEPROM(str,48,71);
-		cE[0] = eeprom_read_dword(ENERGY_CAL0);
-		cE[1] = eeprom_read_dword(ENERGY_CAL1);
-		cE[2] = eeprom_read_dword(ENERGY_CAL2);
+		eeprom_busy_wait();
+		cE[0] = eeprom_read_dword(&energyCalPar[0]);
+		cE[1] = eeprom_read_dword(&energyCalPar[1]);
+		cE[2] = eeprom_read_dword(&energyCalPar[2]);
 		
-		cU[0] = eeprom_read_word(VOL_CAL0);
-		cU[1] = eeprom_read_word(VOL_CAL1);
-		cU[2] = eeprom_read_word(VOL_CAL2);
+		cU[0] = eeprom_read_word(&voltageCalPar[0]);
+		cU[1] = eeprom_read_word(&voltageCalPar[1]);
+		cU[2] = eeprom_read_word(&voltageCalPar[2]);
 		
-		cI[0] = eeprom_read_word(AMP_CAL0);
-		cI[1] = eeprom_read_word(AMP_CAL1);
-		cI[2] = eeprom_read_word(AMP_CAL2);
+		cI[0] = eeprom_read_word(&ampereCalPar[0]);
+		cI[1] = eeprom_read_word(&ampereCalPar[1]);
+		cI[2] = eeprom_read_word(&ampereCalPar[2]);
 		/*
 		cE[0]  = (unsigned char)str[3];
 		cE[0] <<= 8;
@@ -1508,29 +1513,35 @@ void settings(char * command){
 		cI[2] |= (unsigned char)str[22];*/
 
 		lcd_print3(5,20,"E1:",&f3,0,0);
-		lcd_print3(5,35,"E2:",&f3,0,0);
-		lcd_print3(5,50,"E3:",&f3,0,0);
-		lcd_print3(100,5,"cE",&f3,0,0);
-		lcd_print3(160,5,"cU",&f3,0,0);
-		lcd_print3(210,5,"cI",&f3,0,0);
+		lcd_print3(5,30,"E2:",&f3,0,0);
+		lcd_print3(5,40,"E3:",&f3,0,0);
+		lcd_print3(16,0,"CALIBRATION:  cE",&f3,0,0);
+		lcd_print3(160,0,"cU",&f3,0,0);
+		lcd_print3(210,0,"cI",&f3,0,0);
 
-		readEEPROM(str,72,75);
+		//readEEPROM(str,72,75);
 		sprintf_P(buffer,PSTR("He so TI:"));
-		lcd_print3(5,65,buffer,&f3,0,0);
-		TICoef1 = (unsigned char)str[1];
-		TICoef1 <<= 8;
-		TICoef1 |= (unsigned char)str[0];  
-		TICoef2 = (unsigned char)str[3];
-		TICoef2 <<= 8;
-		TICoef2 |= (unsigned char)str[2]; 
+		lcd_print3(5,50,buffer,&f3,0,0);
+		//TICoef1 = (unsigned char)str[1];
+		//TICoef1 <<= 8;
+		//TICoef1 |= (unsigned char)str[0];
+		TICoef1 = eeprom_read_word(&TiCoefPar1);  
+		//TICoef2 = (unsigned char)str[3];
+		//TICoef2 <<= 8;
+		//TICoef2 |= (unsigned char)str[2];
+		TICoef2 = eeprom_read_word(&TiCoefPar2); 
 		if((TICoef1 > 500)||(TICoef2 > 200)){//Add 06/08/2010
 			TICoef1 = 200;
 			TICoef2 = 5;
-			buffer[0] = TICoef1 & 0xFF; 
-			buffer[1] = (TICoef1>>8) & 0xFF; 
-			buffer[2] = TICoef2 & 0xFF; 
-			buffer[3] = (TICoef2>>8) & 0xFF; 
-			writeEEPROM(buffer,72,75);
+			//buffer[0] = TICoef1 & 0xFF; 
+			//buffer[1] = (TICoef1>>8) & 0xFF; 
+			//buffer[2] = TICoef2 & 0xFF; 
+			//buffer[3] = (TICoef2>>8) & 0xFF; 
+			//writeEEPROM(buffer,72,75);
+			eeprom_busy_wait();
+			eeprom_write_word(&TiCoefPar1,TICoef1);
+			eeprom_busy_wait();
+			eeprom_write_word(&TiCoefPar1,TICoef2);
 		} 
                                                                                                          
 		for(i=0;i<3;i++){//Add 06/08/2010
@@ -1550,56 +1561,64 @@ void settings(char * command){
 		}
 		for(i=0;i<3;i++){
 			ltoa(cE[i],buffer,10);//numberToString(cE[i],buffer);
-			lcd_print3(100,20+15*i,buffer,&f3,0,0);
+			lcd_print3(100,20+10*i,buffer,&f3,0,0);
 			itoa(cU[i],buffer,10);//numberToString(cU[i],buffer);
-			lcd_print3(160,20+15*i,buffer,&f3,0,0);
+			lcd_print3(160,20+10*i,buffer,&f3,0,0);
 			itoa(cI[i],buffer,10);//numberToString(cI[i],buffer);
-			lcd_print3(210,20+15*i,buffer,&f3,0,0);
+			lcd_print3(210,20+10*i,buffer,&f3,0,0);
 		}
 	
 		itoa(TICoef1,buffer,10);//wordToString(TICoef1,buffer);
-		lcd_print3(100,65,buffer,&f3,0,0);
+		lcd_print3(100,50,buffer,&f3,0,0);
 		itoa(TICoef2,buffer,10);//wordToString(TICoef2,buffer);
-		lcd_print3(160,65,buffer,&f3,0,0);	
+		lcd_print3(160,50,buffer,&f3,0,0);	
 
-		sprintf_P(buffer,PSTR("Thoi gian RSMD :"));
-		lcd_print3(5,80,buffer,&f3,0,0);
-
-		wordToString(tM,buffer);
-		lcd_print3(100,80,buffer,&f3,0,0);
+		//sprintf_P(buffer,PSTR("Thoi gian RSMD :"));
+		//lcd_print3(5,80,buffer,&f3,0,0);
+		//wordToString(tM,buffer);
+		//lcd_print3(100,60,buffer,&f3,0,0);
 
 		sprintf_P(buffer,PSTR("Reset Energy:"));
-		lcd_print3(5,95,buffer,&f3,0,0);
+		lcd_print3(5,60,buffer,&f3,0,0);
 	
 		wordToString(tL,buffer);
-		lcd_print3(100,95,"NO",&f3,0,0);
+		lcd_print3(100,60,"NO",&f3,0,0);
 
 		sprintf_P(buffer,PSTR("Load defaul:"));
-		lcd_print3(130,95,buffer,&f3,0,0);
-		lcd_print3(210,95,"NO",&f3,0,0);	
+		lcd_print3(130,60,buffer,&f3,0,0);
+		lcd_print3(210,60,"NO",&f3,0,0);	
 
 		lcd_print3(10,114,"BACK",&f3,0,0);
 		lcd_print3(210,114,ok_str1,&f3,0,0);
 
-		readEEPROM(str,119,121);
-		PHCAL1 = str[0];
-		PHCAL2 = str[1];
-		PHCAL3 = str[2];
+		//readEEPROM(str,119,121);
+		//PHCAL1 = str[0];
+		//PHCAL2 = str[1];
+		//PHCAL3 = str[2];
+		PHCAL1 = eeprom_read_byte(&phaseCalib[0]);
+		PHCAL2 = eeprom_read_byte(&phaseCalib[1]);
+		PHCAL3 = eeprom_read_byte(&phaseCalib[2]);
 		if((PHCAL1<0)||(PHCAL2<0)||(PHCAL3<0)){//Add 06/08/2010
 			PHCAL1 = 0;
 			PHCAL2 = 0;
 			PHCAL3 = 0;
-			str[0] = 0;
-			str[1] = 0;
-			str[2] = 0;
-			writeEEPROM(str,119,121);
+			//str[0] = 0;
+			//str[1] = 0;
+			//str[2] = 0;
+			//writeEEPROM(str,119,121);
+			eeprom_busy_wait();
+			eeprom_write_byte(&phaseCalib[0],PHCAL1);
+			eeprom_busy_wait();
+			eeprom_write_byte(&phaseCalib[1],PHCAL2);
+			eeprom_busy_wait();
+			eeprom_write_byte(&phaseCalib[2],PHCAL3);
 		}
 		wordToString(PHCAL1,buffer);	
-		lcd_print3(100,110,buffer,&f3,0,0);
+		lcd_print3(100,70,buffer,&f3,0,0);
 		wordToString(PHCAL2,buffer);	
-		lcd_print3(160,110,buffer,&f3,0,0);
+		lcd_print3(160,70,buffer,&f3,0,0);
 		wordToString(PHCAL3,buffer);	
-		lcd_print3(210,110,buffer,&f3,0,0);
+		lcd_print3(210,70,buffer,&f3,0,0);
 
 		changeTiPoiter = 0;
 		passSecurity = 0;
@@ -1618,21 +1637,21 @@ void settings(char * command){
 				}
 			    current = readCurrent(i + 1);
 				floatToString(current,buffer);
-				lcd_print3(25,20+15*i,buffer,&f3,0,0);
+				lcd_print3(25,20+10*i,buffer,&f3,0,0);
 			}
 		}
 		if(passSecurity == 1){
-			if(key[0]){//Left
+			if(KEY_LEFT){//Left
 				changeTiPoiter--;
-				key[0] = 0;
+				KEY_LEFT = 0;
 				if(changeTiPoiter == 255) changeTiPoiter = 16;
 			}
-			if(key[1]){//Righ
+			if(KEY_RIGHT){//Righ
 				changeTiPoiter++;
-				key[1] = 0;
+				KEY_RIGHT = 0;
 				if(changeTiPoiter >= 17) changeTiPoiter = 0;
 			}
-			if(key[3]){//Down
+			if(KEY_DOWN){//Down
 				switch (changeTiPoiter){
 					case 0:
 						cE[0] -= 50;
@@ -1706,9 +1725,9 @@ void settings(char * command){
 					default : 	
 						break;
 				}
-				key[3] = 0;
+				KEY_DOWN = 0;
 			}
-			if(key[2]){//Up
+			if(KEY_UP){//Up
 				switch (changeTiPoiter){
 					case 0:
 						cE[0] += 50;
@@ -1782,88 +1801,93 @@ void settings(char * command){
 					default : 	
 						break;
 				}
-				key[2] = 0;
+				KEY_UP = 0;
 			}
 			for(i=0;i<3;i++){
 				numberToString(cE[i],buffer);
 				if((3*i) == changeTiPoiter)
-					lcd_print4(100,20+15*i,buffer,&f3,0,0);
+					lcd_print4(100,20+10*i,buffer,&f3,0,0);
 				else
-					lcd_print3(100,20+15*i,buffer,&f3,0,0);
+					lcd_print3(100,20+10*i,buffer,&f3,0,0);
 				numberToString(cU[i],buffer);
 				if((3*i+1) == changeTiPoiter)
-					lcd_print4(160,20+15*i,buffer,&f3,0,0);
+					lcd_print4(160,20+10*i,buffer,&f3,0,0);
 				else
-					lcd_print3(160,20+15*i,buffer,&f3,0,0);
+					lcd_print3(160,20+10*i,buffer,&f3,0,0);
 				numberToString(cI[i],buffer);
 				if((3*i+2) == changeTiPoiter)
-					lcd_print4(210,20+15*i,buffer,&f3,0,0);
+					lcd_print4(210,20+10*i,buffer,&f3,0,0);
 				else
-					lcd_print3(210,20+15*i,buffer,&f3,0,0);
+					lcd_print3(210,20+10*i,buffer,&f3,0,0);
 			}	
 			
 			wordToString(TICoef1,buffer);
 			if(changeTiPoiter == 9)
-				lcd_print4(100,65,buffer,&f3,0,0);
+				lcd_print4(100,50,buffer,&f3,0,0);
 			else
-				lcd_print3(100,65,buffer,&f3,0,0);
+				lcd_print3(100,50,buffer,&f3,0,0);
 			wordToString(TICoef2,buffer);
 			if(changeTiPoiter == 10)
-				lcd_print4(160,65,buffer,&f3,0,0);
+				lcd_print4(160,50,buffer,&f3,0,0);
 			else
-				lcd_print3(160,65,buffer,&f3,0,0);
-			wordToString(tM,buffer);
-			if(changeTiPoiter == 11)
-				lcd_print4(100,80,buffer,&f3,0,0);
-			else
-				lcd_print3(100,80,buffer,&f3,0,0);
+				lcd_print3(160,50,buffer,&f3,0,0);
+			//wordToString(tM,buffer);
+			//if(changeTiPoiter == 11)
+			//	lcd_print4(100,80,buffer,&f3,0,0);
+			//else
+			//	lcd_print3(100,80,buffer,&f3,0,0);
 			if(changeTiPoiter == 12){
 				if(resetEnergy == 1)
-					lcd_print4(100,95,"YES",&f3,0,0);
+					lcd_print4(100,60,"YES",&f3,0,0);
 				else
-					lcd_print4(100,95,"NO  ",&f3,0,0);
+					lcd_print4(100,60,"NO  ",&f3,0,0);
 			}
 			else{
 				if(resetEnergy == 1)
-					lcd_print3(100,95,"YES",&f3,0,0);
+					lcd_print3(100,60,"YES",&f3,0,0);
 				else
-					lcd_print3(100,95,"NO  ",&f3,0,0);
+					lcd_print3(100,60,"NO  ",&f3,0,0);
 			}
 			if(changeTiPoiter == 16){
 				if(loadDefaul == 1)
-					lcd_print4(210,95,"YES",&f3,0,0);
+					lcd_print4(210,60,"YES",&f3,0,0);
 				else
-					lcd_print4(210,95,"NO  ",&f3,0,0);
+					lcd_print4(210,60,"NO  ",&f3,0,0);
 			}
 			else{
 				if(loadDefaul == 1)
-					lcd_print3(210,95,"YES",&f3,0,0);
+					lcd_print3(210,60,"YES",&f3,0,0);
 				else
-					lcd_print3(210,95,"NO  ",&f3,0,0);
+					lcd_print3(210,60,"NO  ",&f3,0,0);
 			}
 			wordToString(PHCAL1,buffer);
 			if(changeTiPoiter == 13)
-				lcd_print4(100,110,buffer,&f3,0,0);
+				lcd_print4(100,70,buffer,&f3,0,0);
 			else
-				lcd_print3(100,110,buffer,&f3,0,0);
+				lcd_print3(100,70,buffer,&f3,0,0);
 			wordToString(PHCAL2,buffer);
 			if(changeTiPoiter == 14)
-				lcd_print4(160,110,buffer,&f3,0,0);
+				lcd_print4(160,70,buffer,&f3,0,0);
 			else
-				lcd_print3(160,110,buffer,&f3,0,0);
+				lcd_print3(160,70,buffer,&f3,0,0);
 			wordToString(PHCAL3,buffer);
 			if(changeTiPoiter == 15)
-				lcd_print4(210,110,buffer,&f3,0,0);
+				lcd_print4(210,70,buffer,&f3,0,0);
 			else
-				lcd_print3(210,110,buffer,&f3,0,0);
+				lcd_print3(210,70,buffer,&f3,0,0);
 				
-			if(key[4]){ // OK
-				key[4] = 0;
-				buffer[0] = TICoef1 & 0xFF; 
+			if(KEY_OK){ // OK
+				KEY_OK = 0;
+				/*buffer[0] = TICoef1 & 0xFF; 
 				buffer[1] = (TICoef1>>8) & 0xFF; 
 				buffer[2] = TICoef2 & 0xFF; 
 				buffer[3] = (TICoef2>>8) & 0xFF; 
-				writeEEPROM(buffer,72,75);
+				writeEEPROM(buffer,72,75);*/
+				eeprom_busy_wait();
+				eeprom_write_word(&TiCoefPar1,TICoef1);
+				eeprom_busy_wait();
+				eeprom_write_word(&TiCoefPar1,TICoef2);
+				
 				_delay_ms(50);
 				setCalibrationParam(cE,cU,cI);
 				CF_Scall = 7000/TICoef1;//Vref = 125mVAC
@@ -1873,23 +1897,33 @@ void settings(char * command){
 				buffer[0] = PHCAL1;
 				buffer[1] = PHCAL2;
 				buffer[2] = PHCAL3;
-				writeEEPROM(buffer,119,121);
+				//writeEEPROM(buffer,119,121);
+				eeprom_busy_wait();
+				eeprom_write_byte(&phaseCalib[0],PHCAL1);
+				eeprom_busy_wait();
+				eeprom_write_byte(&phaseCalib[1],PHCAL2);
+				eeprom_busy_wait();
+				eeprom_write_byte(&phaseCalib[2],PHCAL3);
 				writePhaseCorrection(buffer[0],1);
 				writePhaseCorrection(buffer[1],2);
 				writePhaseCorrection(buffer[2],3);
 				//writeLogTime(tL/10);
-				setModemTimeout(tM/10);
+				////////////////////////////////setModemTimeout(tM/10);
 				if(resetEnergy == 1)
 					resetTotalEnergy();
 				if(loadDefaul == 1){//Add 6/9/2010
 					TICoef1 = 200;
 					TICoef2 = 5;
-					buffer[0] = TICoef1 & 0xFF; 
+					/*buffer[0] = TICoef1 & 0xFF; 
 					buffer[1] = (TICoef1>>8) & 0xFF; 
 					buffer[2] = TICoef2 & 0xFF; 
 					buffer[3] = (TICoef2>>8) & 0xFF; 
-					writeEEPROM(buffer,72,75);
-
+					writeEEPROM(buffer,72,75);*/
+					eeprom_busy_wait();
+					eeprom_write_word(&TiCoefPar1,TICoef1);
+					eeprom_busy_wait();
+					eeprom_write_word(&TiCoefPar1,TICoef2);
+					
 					cE[0] = 22500;
 					cE[1] = 22500;
 					cE[2] = 22500;
@@ -1907,7 +1941,13 @@ void settings(char * command){
 					buffer[0] = PHCAL1;
 					buffer[1] = PHCAL2;
 					buffer[2] = PHCAL3;
-					writeEEPROM(buffer,119,121);
+					//writeEEPROM(buffer,119,121);
+					eeprom_busy_wait();
+					eeprom_write_byte(&phaseCalib[0],PHCAL1);
+					eeprom_busy_wait();
+					eeprom_write_byte(&phaseCalib[1],PHCAL2);
+					eeprom_busy_wait();
+					eeprom_write_byte(&phaseCalib[2],PHCAL3);
 					writePhaseCorrection(buffer[0],1);
 					writePhaseCorrection(buffer[1],2);
 					writePhaseCorrection(buffer[2],3);
@@ -1922,30 +1962,30 @@ void settings(char * command){
     	}
 		else {//check security password 
 			// ***** U D Enter ******************************
-			if(key[2]){ //up
-				key[2] = 0;
+			if(KEY_UP){ //up
+				KEY_UP = 0;
 				if(countPassWord == 0)
 					countPassWord++;
 				else
 					countPassWord = 0;
 			}
-			if(key[3]){ //down
-				key[3] = 0;
+			if(KEY_DOWN){ //down
+				KEY_DOWN = 0;
 				if(countPassWord == 1)
 					countPassWord++;
 				else
 					countPassWord = 0;
 			}
-			if(key[0]){ //left
-				key[0] = 0;
+			if(KEY_LEFT){ //left
+				KEY_LEFT = 0;
 				countPassWord = 0;
 			}
-			if(key[1]){ //Right
-				key[1] = 0;
+			if(KEY_RIGHT){ //Right
+				KEY_RIGHT = 0;
 				countPassWord = 0;
 			}
-			if(key[4]){
-				key[4] = 0;
+			if(KEY_OK){
+				KEY_OK = 0;
 				if(countPassWord==2)	
 					countPassWord++;
 				else	countPassWord = 0;
@@ -1992,18 +2032,18 @@ void lightControl(char * command){
 	}
 	else{
 		lastlightStatus = lightStatus;
-		if(key[3]){	
+		if(KEY_DOWN){	
 			lightStatus++;
-			key[3] = 0;
+			KEY_DOWN = 0;
 			if(lightStatus == 4) lightStatus = 0;
 		}
-		if(key[2]){
+		if(KEY_UP){
 			lightStatus--;
-			key[2] = 0;
+			KEY_UP = 0;
 			if(lightStatus == 255) lightStatus = 3;
 		}
-		if(key[4]){
-			key[4] = 0;
+		if(KEY_OK){
+			KEY_OK = 0;
 			lcd_print3(210,114,space_flush1,&f3,0,0);
 			lcd_print3(211,115,ok_str1,&f3,0,0);
 			_delay_ms(100);
@@ -2106,6 +2146,8 @@ void menu(char * command){
 		draw(floppyDisk,21,16);
 		draw(monitor,25,16);
 		draw(node_Scheduler_icon,1,46);
+		draw(controlNodeIcon,5,46);
+		draw(abouts_icon,9,46);
 		//currentMenu = 0;
 		switch (currentMenu){
 			case 0:
@@ -2144,10 +2186,20 @@ void menu(char * command){
 				lcd_print3(65,114,buffer,&f3,0,0);
 				break;
 			case 7:
-			lcd_box(6, 44, 34,70,1);
-			sprintf_P(buffer,PSTR("MODEM"));
-			lcd_print3(65,114,buffer,&f3,0,0);
+				lcd_box(6, 44, 34,70,1);
+				sprintf_P(buffer,PSTR("GROUP SCHEUDLE"));
+				lcd_print3(65,114,buffer,&f3,0,0);
 			break;	
+			case 8:
+				lcd_box(38, 44, 66,70,1);
+				sprintf_P(buffer,PSTR("CONTROL NODES"));
+				lcd_print3(65,114,buffer,&f3,0,0);
+			break;
+			case 9:
+				lcd_box(70, 44, 98,70,1);
+				sprintf_P(buffer,PSTR("ABOUTS"));
+				lcd_print3(65,114,buffer,&f3,0,0);
+			break;
 			default :
 				break;
 		}
@@ -2158,15 +2210,15 @@ void menu(char * command){
 	}
 	else{
 		lastMenu = currentMenu;
-		if(key[1]){	
+		if(KEY_RIGHT){	
 			currentMenu++;
-			key[1] = 0;
-			if(currentMenu >= 8) currentMenu = 0;
+			KEY_RIGHT = 0;
+			if(currentMenu >= 10) currentMenu = 0;
 		}
-		if(key[0]){
+		if(KEY_LEFT){
 			currentMenu--;
-			key[0] = 0;
-			if(currentMenu == 255) currentMenu = 7;
+			KEY_LEFT = 0;
+			if(currentMenu == 255) currentMenu = 9;
 		}
 		switch (lastMenu){
 			case 0:
@@ -2192,6 +2244,12 @@ void menu(char * command){
 				break;
 			case 7:
 				lcd_box(6, 44, 34,70,0);
+				break;
+			case 8:
+				lcd_box(38, 44, 66,70,0);
+				break;
+			case 9:
+				lcd_box(70, 44, 98,70,0);
 				break;
 			default :
 				break;
@@ -2250,14 +2308,28 @@ void menu(char * command){
 				lcd_box(6, 44, 34,70,1);
 				sprintf_P(buffer,flush_space);
 				lcd_print3(65,114,buffer,&f3,0,0);
-				sprintf_P(buffer,PSTR("MODEM"));
+				sprintf_P(buffer,PSTR("GROUP SCHEUDLE"));
+				lcd_print3(65,114,buffer,&f3,0,0);
+				break;
+			case 8:
+				lcd_box(38, 44, 66,70,1);
+				sprintf_P(buffer,flush_space);
+				lcd_print3(65,114,buffer,&f3,0,0);
+				sprintf_P(buffer,PSTR("NODE CONTROL"));
+				lcd_print3(65,114,buffer,&f3,0,0);
+			break;
+			case 9:
+				lcd_box( 70, 44,  98,70,1);
+				sprintf_P(buffer,flush_space);
+				lcd_print3(65,114,buffer,&f3,0,0);
+				sprintf_P(buffer,PSTR("ABOUTS"));
 				lcd_print3(65,114,buffer,&f3,0,0);
 			break;
 			default :
 				break;
 		}
-		if(key[4]){
-			key[4] = 0;
+		if(KEY_OK){
+			KEY_OK = 0;
 			lcd_print3(210,114,space_flush1,&f3,0,0);
 			lcd_print3(211,115,ok_str1,&f3,0,0);
 			_delay_ms(100);
@@ -2268,7 +2340,7 @@ void menu(char * command){
 					lightControl(key);
 					break;
 				case 1:
-					settings(key);
+					calibrationSCR(key);
 					break;
 				case 2:
 					changeSchedule(key);
@@ -2277,16 +2349,22 @@ void menu(char * command){
 					changeTimeDate(key);
 					break;
 				case 4:
-					game(key);
+					nodeMonitor(key);
 					break;
 				case 5:
-					sdCard(key);
+					settingsSCR(key);
 					break;
 				case 6:
-					terminal(key);
+					modemSettings(key);
 					break;
 				case 7:
 					nodesSchedule(key);
+					break;
+				case 8:
+					controlNodes(key);
+					break;
+				case 9:
+					deviceInfor(key);
 					break;
 				default :
 					break;
@@ -2312,7 +2390,7 @@ void draw_table(void){
 		changeDecorateLightSchedule(key);
 		return;
 	}
-	key[0]=0;key[1]=0;key[2]=0;key[3]=0;key[4]=0;key[5]=0;
+	KEY_LEFT=0;KEY_RIGHT=0;KEY_UP=0;KEY_DOWN=0;KEY_OK=0;key[5]=0;
 	screen = mainScreen;
 	lcd_clear_graph();    		 // clear graphics memory of LCD
 	lcd_clear_text();  		     // clear text memory of LCD
@@ -2418,23 +2496,23 @@ void scanKey(void){
 		Delay(12);
 	}
 	if(Left){
-		key[0] = 1;
+		KEY_LEFT = 1;
 	    pressButton = 1;		
 	}
 	if(Right){
-		key[1] = 1;
+		KEY_RIGHT = 1;
 	    pressButton = 1;			
 	}
 	if(Up){
-		key[2] = 1;
+		KEY_UP = 1;
 		pressButton = 1;		
 	}
 	if(Down){
-		key[3] = 1;
+		KEY_DOWN = 1;
 		pressButton = 1; 		
 	}	
 	if(Enter){
-		key[4] = 1;
+		KEY_OK = 1;
 		pressButton = 1;
 	}
 	if(pressButton){
@@ -2443,9 +2521,9 @@ void scanKey(void){
 		resetBackLightTime();
 		switch (screen){
 			case mainScreen:
-				key[0]=0;key[1]=0;key[2]=0;key[3]=0;key[5]=0;
-				if(key[4] == 1){
-					key[4] = 0;
+				KEY_LEFT=0;KEY_RIGHT=0;KEY_UP=0;KEY_DOWN=0;key[5]=0;
+				if(KEY_OK == 1){
+					KEY_OK = 0;
 					currentMenu = 0;
 					menu(key);
 				}
@@ -2462,18 +2540,18 @@ void scanKey(void){
 			case scheduleScreen:
 				changeSchedule(key);
 				break;
-			//case settingScreen:
-				//settings(key);
-				//break;
-			case gameScreen:
-				game(key);
+			case setNodesScheduleScreen:
+				setNodesSchedule(key);
+				break;
+			case nodeMonitorScreen:
+				nodeMonitor(key);
 				break;
 			case nodesScheduleScreen:
 				nodesSchedule(key);
 				break;
-			//case terminalScreen:
-				//terminal(key);
-				//break;
+			case controlNodesScreen:
+				controlNodes(key);
+				break;
 			case streetLightScheduleScreen:
 				changeStreetLightSchedule(key);
 				break;
@@ -2482,7 +2560,7 @@ void scanKey(void){
 				break;
 			default :
 				break;
-		}	
+		}
 	}	
 	if(Escap){
 		key[5] = 1;
@@ -2507,49 +2585,382 @@ void scanKey(void){
 				if((screen != menuScreen)&&(screen != mainScreen)) menu(key);	
 				break;
 		}	
+		return;
 	}
-	if(screen == settingScreen) settings(key);
-	if(screen == gameScreen) game(key);
-	if(screen == sdcardScreen) sdCard(key);
-	if(screen == terminalScreen) terminal(key);
+	//All Auto refresh Screen
+	switch(screen){
+		case calibrationScreen:		calibrationSCR(key);	break;
+		case nodeMonitorScreen:		nodeMonitor(key);	break;
+		case nodesScheduleScreen:	nodesSchedule(key);	break;
+		case controlNodesScreen:	controlNodes(key);	break;
+		case setNodesScheduleScreen:setNodesSchedule(key);	break;
+		case settingsScreen:		settingsSCR(key);	break;
+		case terminalScreen:		modemSettings(key);	break;
+	}
 	//if(screen == gameScreen) game(key);
 }//End scanKey
 
 //
 void nodesSchedule(char * command){
-	int i,j;
-	char buffer[30];
-	char str[30];
+	int i=0,j=0;
+	char strtmp[40];
 	//unsigned char temp;
 	if(screen != nodesScheduleScreen){
 		screen = nodesScheduleScreen;
-		pageDisplay = 0;
+		changeTimePoiter = 0;
+		//pageDisplay = 0;
 		lcd_clear_graph();    		 // clear graphics memory of LCD
 		lcd_clear_text();  		     // clear text memory of LCD
-		sprintf_P(buffer,PSTR("NODES SCHEDULE MONITOR"));
-		lcd_print3(16,0,buffer,&f3,0,0);
-		for(i = 1;i<MAX_GROUP_NODE;i++){
-			sprintf_P(buffer,PSTR("%01u"),i);
-			lcd_print3(0,i*10,buffer,&f3,0,0);
+		sprintf_P(strtmp,PSTR("GROUP NODE SCHEDULE"));
+		lcd_print3(16,0,strtmp,&f3,0,0);
+		eeprom_busy_wait();
+		groupNodeScheduleEnb[0] = eeprom_read_byte(&nodesScheduleEnb[0]);
+		if((groupNodeScheduleEnb[0]>MAX_GROUP_NODE)&&(groupNodeScheduleEnb[0] != 0xFF))	groupNodeScheduleEnb[0] = 0xFF;	// prevent exception
+		for(i = 1;i<=MAX_GROUP_NODE;i++){
+			sprintf_P(strtmp,PSTR("%01u:"),i);
+			lcd_print3(0,10+(i-1)*20,strtmp,&f3,0,0);
+		}
+		for(i=0;i<MAX_GROUP_NODE;i++){
+			//eeprom_read_block(buffer,&nodesScheduleTable[i][0],27);
+			for(j=0;j<=15;j++){
+				eeprom_busy_wait();
+				sprintf(&strtmp[j*2],"%02X",eeprom_read_byte(&nodesScheduleTable[i][j]));
+			}
+			strtmp[30] = 0;
+			lcd_print3(18,10+20*i,strtmp,&f3,0,0);
+			for(j=0;j<=12;j++){
+				eeprom_busy_wait();
+				sprintf(&strtmp[j*2],"%02X",eeprom_read_byte(&nodesScheduleTable[i][j+15]));
+			}
+			strtmp[26] = 0;
+			lcd_print3(18,20+20*i,strtmp,&f3,0,0);
+		}
+		sprintf_P(strtmp,PSTR("Management scheduler:        by SLC"));
+		lcd_print3(0,100,strtmp,&f3,0,0);
+	}
+	else {		
+		if(KEY_UP){//Righ
+			KEY_UP = 0;	
+			groupNodeScheduleEnb[0]++;
+			switch(groupNodeScheduleEnb[0]){
+				case MAX_GROUP_NODE+1:
+				groupNodeScheduleEnb[0] = 0xFF;
+				break;
+				case 0:
+				groupNodeScheduleEnb[0] = 0;
+				break;
+			}
+		}
+		sprintf(strtmp,"%03u",groupNodeScheduleEnb[0]);
+		lcd_print4(114,100,strtmp,&f3,0,0);
+		
+		if(KEY_OK){//Righ
+			KEY_OK = 0;
+			eeprom_busy_wait();
+			eeprom_write_byte(nodesScheduleEnb,groupNodeScheduleEnb[0]);
+			_delay_ms(200);
+			sprintf(strtmp,"SAVE");
+			lcd_print3(210,110,strtmp,&f3,0,0);
+		}
+	}// else
+	return;
+}//End node schedule
+
+void controlNodes(char * command){
+	int i=0,j=0;
+	char strtmp[40];
+	//unsigned char temp;
+	if(screen != controlNodesScreen){
+		screen = controlNodesScreen;
+		changeTimePoiter = 0;
+		//pageDisplay = 0;
+		lcd_clear_graph();    		 // clear graphics memory of LCD
+		lcd_clear_text();  		     // clear text memory of LCD
+		sprintf_P(strtmp,PSTR("CONTROL NODES"));
+		lcd_print3(16,0,strtmp,&f3,0,0);
+		groupNodeScheduleEnb[0] = 1;	// control power of group node x
+		groupNodeScheduleEnb[1] = 100;	// Power
+	}
+	else {
+		if(KEY_UP){//UP
+			changeTimePoiter--;
+			KEY_UP = 0;
+			if(changeTimePoiter == 255) changeTimePoiter = 2;
+		}
+		if(KEY_DOWN){//DOWN
+			changeTimePoiter++;
+			KEY_DOWN = 0;
+			if(changeTimePoiter >= 3) changeTimePoiter = 0;
+		}
+		if(KEY_LEFT){//Righ
+			KEY_LEFT = 0;
+			if(changeTimePoiter==0){
+				groupNodeScheduleEnb[0]++;
+				switch(groupNodeScheduleEnb[0]){
+					case MAX_GROUP_NODE+1:
+						groupNodeScheduleEnb[0] = 0xFF;
+						break;
+					case 0:
+						groupNodeScheduleEnb[0] = 1;
+						break;
+				}
+			}
+		}
+		if(KEY_RIGHT){//left
+			KEY_RIGHT = 0;
+			if(changeTimePoiter==0){
+				groupNodeScheduleEnb[1] = (groupNodeScheduleEnb[1])?0:100;
+			}
+		}	
+
+		sprintf(strtmp,"1:Control Group node %03u >> %03u%%",groupNodeScheduleEnb[0],groupNodeScheduleEnb[1]);
+		if(changeTimePoiter == 0){
+			lcd_print4(0,20,strtmp,&f3,0,0);
+		}else{
+			lcd_print3(0,20,strtmp,&f3,0,0);
+		}
+		sprintf(strtmp,"2:Set schedule for Node >>");
+		if(changeTimePoiter == 1){
+			lcd_print4(0,30,strtmp,&f3,0,0);
+		}else{
+			lcd_print3(0,30,strtmp,&f3,0,0);
+		}
+		sprintf(strtmp,"3:Set Realtime for All Node");
+		if(changeTimePoiter == 2){
+			lcd_print4(0,40,strtmp,&f3,0,0);
+		}else{
+			lcd_print3(0,40,strtmp,&f3,0,0);
+		}
+		
+		if(KEY_OK){//Righ
+			KEY_OK = 0;_delay_ms(200);
+			switch(changeTimePoiter){
+				case 0:	// Control Group
+					RegBytes[0] = 0;
+					RegBytes[1] = 1;
+					RegBytes[2] = groupNodeScheduleEnb[0];	// Group Nodes
+					RegBytes[3] = groupNodeScheduleEnb[1];	// power of lamp 0% 100%
+					RegBytes[4] = time.second;	// just random
+					break;
+				case 1:	// Set schedule
+					setNodesSchedule(key);
+					break;
+				case 2:	// Set realtime
+					readRealTime(&time);
+					RegBytes[0] = 0;
+					RegBytes[1] = 2;
+					RegBytes[2] = 0xFF;
+					RegBytes[3] = time.second;
+					RegBytes[4] = time.minute;
+					RegBytes[5] = time.hour;
+					RegBytes[6] = time.day;
+					RegBytes[7] = time.date;
+					RegBytes[8] = time.month;
+					RegBytes[9] = time.year;
+					break;
+			}
+			sprintf(strtmp,"DONE");
+			lcd_print3(210,110,strtmp,&f3,0,0);
+		}
+	}// else
+	return;
+}//End control nodes
+
+void setNodesSchedule(char * command){
+	int i=0,j=0,k=0;
+	char strtmp[40];
+	//unsigned char temp;
+	if(screen != setNodesScheduleScreen){
+		screen = setNodesScheduleScreen;
+		KEY_OK = 0;
+		changeTimePoiter = 0; configPoiter = 0;
+		//pageDisplay = 0;
+		lcd_clear_graph();    		 // clear graphics memory of LCD
+		//lcd_clear_text();  		     // clear text memory of LCD
+		sprintf_P(strtmp,PSTR("SET NODES SCHEDULE"));
+		lcd_print3(16,0,strtmp,&f3,0,0);
+		for(i=0;i<27;i++){
+			groupNodeScheduleEnb[i+1] = pgm_read_byte(&node_Schedule_default[i]);
 		}
 	}
 	else {
-		if(key[0]){ //left
-			key[0] = 0;
+		if(KEY_LEFT){//UP
+			configPoiter = changeTimePoiter;		// store old pointer
+			changeTimePoiter--;
+			KEY_LEFT = 0;
+			if(changeTimePoiter == 255) changeTimePoiter = 27;
 		}
-		if(key[1]){ //Right
-			key[1] = 0;
+		if(KEY_RIGHT){//DOWN
+			configPoiter = changeTimePoiter;		// store old pointer
+			changeTimePoiter++;
+			KEY_RIGHT = 0;
+			if(changeTimePoiter >= 28) changeTimePoiter = 0;
 		}
-		for(i=0;i<MAX_GROUP_NODE;i++){
-			eeprom_read_block(buffer,(void*)(NODE_SCHEDULE_X+27*i),27);
-			for(j=0;j<=14;j++){
-				sprintf(str+(j<1),"%02X",buffer[j]);
+		if(KEY_UP){//Righ
+			KEY_UP = 0;
+			configPoiter = changeTimePoiter;		// store old pointer
+			groupNodeScheduleEnb[changeTimePoiter]++;
+			if(changeTimePoiter==0){			//Group
+				switch(groupNodeScheduleEnb[0]){
+					case MAX_GROUP_NODE+1:
+					groupNodeScheduleEnb[0] = 0xFF;
+					break;
+					case 0:
+					groupNodeScheduleEnb[0] = 1;
+					break;
+				}
+				}else{
+				switch(changeTimePoiter%3){
+					case 1:			//hh
+					if(groupNodeScheduleEnb[changeTimePoiter]>23)	groupNodeScheduleEnb[changeTimePoiter] = 0;
+					break;
+					case 2:			//mm
+					if(groupNodeScheduleEnb[changeTimePoiter]>59)	groupNodeScheduleEnb[changeTimePoiter] = 0;
+					break;
+					case 0:			//pw
+					groupNodeScheduleEnb[changeTimePoiter] = 100;
+					break;
+				}
 			}
-			lcd_print3(8,10+10*(i<1),buffer,&f3,0,0);
-			for(j=15;j<=27;j++){
-				sprintf(str+(j<1),"%02X",buffer[j]);
+		}
+		if(KEY_DOWN){//Righ
+			KEY_DOWN = 0;
+			configPoiter = changeTimePoiter;		// store old pointer
+			groupNodeScheduleEnb[changeTimePoiter]--;
+			if(changeTimePoiter==0){			// Group
+				switch(groupNodeScheduleEnb[0]){
+					case 0xFE:
+					groupNodeScheduleEnb[0] = MAX_GROUP_NODE;
+					break;
+					case 0:
+					groupNodeScheduleEnb[0] = 0xFF;
+					break;
+				}
+				}else{
+				switch(changeTimePoiter%3){
+					case 1:			//hh
+					if(groupNodeScheduleEnb[changeTimePoiter]==255)	groupNodeScheduleEnb[changeTimePoiter] = 23;
+					break;
+					case 2:			//mm
+					if(groupNodeScheduleEnb[changeTimePoiter]==255)	groupNodeScheduleEnb[changeTimePoiter] = 59;
+					break;
+					case 0:			//pw
+					groupNodeScheduleEnb[changeTimePoiter] = 0;
+					break;
+				}
 			}
-			lcd_print3(8,20+10*(i<1),buffer,&f3,0,0);
+		}
+		if(configPoiter == 0){
+			j = 24; k=10;
+			}else{
+			j = 51 + (((configPoiter-1)%9)*12);
+			k = 10 + ((configPoiter-1)/9)*20;
+		}
+		strtmp[0] = ' ';strtmp[1] = ' ';strtmp[2] = 0;
+		lcd_print3(j,k,strtmp,&f3,0,0);
+		strtmp[0] = ' ';strtmp[1] = ' ';strtmp[2] = 0;
+		strtmp[1] = 0;
+		lcd_print3(j,k+20,strtmp,&f3,0,0);	
+		if(changeTimePoiter == 0){
+			j = 24; k=10;
+			}else{
+			j = 51 + (((changeTimePoiter-1)%9)*12);
+			k = 10 + ((changeTimePoiter-1)/9)*20;
+		}
+		strtmp[0] = '[';
+		strtmp[1] = 0;
+		lcd_print3(j,k,strtmp,&f3,0,0);
+		strtmp[0] = ']';
+		strtmp[1] = 0;
+		lcd_print3(j,k+20,strtmp,&f3,0,0);
+		sprintf(strtmp,"%02X%02X%02X%02X",0,3,groupNodeScheduleEnb[0],9);
+		lcd_print3(0,20,strtmp,&f3,0,0);
+		for(i=0;i<3;i++){
+			for(j=0;j<3;j++){
+				sprintf(strtmp+j*6,"%02X%02X%02X",groupNodeScheduleEnb[i*9 + j*3 + 1],groupNodeScheduleEnb[i*9 +j*3 + 2],groupNodeScheduleEnb[i*9 + j*3+3]);
+			}
+			lcd_print3(50,20+i*20,strtmp,&f3,0,0);
+		}
+			
+		if(KEY_OK){//Righ
+			KEY_OK = 0;	_delay_ms(200);
+			RegBytes[0] = 0;
+			RegBytes[1] = 3;
+			RegBytes[2] = groupNodeScheduleEnb[0];
+			RegBytes[3] = 9;
+			for(i=0;i<27;i++){
+				RegBytes[4+i] = groupNodeScheduleEnb[i+1];
+			}
+			sprintf(strtmp,"SENT");
+			lcd_print3(210,110,strtmp,&f3,0,0);
 		}
 	}// else
-}//End node schedule
+	return;
+}//End control nodes
+
+void deviceInfor(char * command){
+	char buffer[30];
+	unsigned long Pow[3];
+	unsigned long free = 0,total = 0,user = 0;
+	if(screen != informationScreen){
+		screen = informationScreen;
+		lcd_clear_graph();    		 // clear graphics memory of LCD
+		lcd_clear_text();  		     // clear text memory of LCD
+		//Add 05/08/2010 ************************
+		lcd_print3(50,0,"ABOUTS",&f3,0,0);
+		lcd_print3(50,10,"Power(W)",&f3,0,0);
+		lcd_print3(150,10,"Energy(kWh)",&f3,0,0);
+		lcd_print3(5,20,"Phase1:",&f3,0,0);
+		lcd_print3(5,30,"Phase2:",&f3,0,0);
+		lcd_print3(5,40,"Phase3:",&f3,0,0);
+		Pow[0] = dU[0]*dI[0];
+		Pow[1] = dU[1]*dI[1];
+		Pow[2] = dU[2]*dI[2];
+		Pow[0] = (Pow[0]*dPF[0])/100;
+		Pow[1] = (Pow[1]*dPF[1])/100;
+		Pow[2] = (Pow[2]*dPF[2])/100;
+		DisplayNumber(50,20,Pow[0]);
+		DisplayNumber(50,30,Pow[1]);
+		DisplayNumber(50,40,Pow[2]);
+		DisplayNumber(150,20,dE[0]);
+		DisplayNumber(150,30,dE[1]);
+		DisplayNumber(150,40,dE[2]);
+		sprintf_P(buffer,PSTR("SD CARD INFO:"));
+		lcd_print3(5,60,buffer,&f3,0,0);
+		sprintf_P(buffer,PSTR("TOTAL:"));
+		lcd_print3(50,70,buffer,&f3,0,0);
+		sprintf_P(buffer,PSTR("FREE:"));
+		lcd_print3(50,80,buffer,&f3,0,0);
+		total = checkCapacitor(&free,&user);
+		if(total < 10){
+			sprintf_P(buffer,PSTR("NOT INSERTED"));
+			lcd_print3(90,60,buffer,&f3,0,0);
+			}else{
+			sprintf_P(buffer,PSTR("INSERTED"));
+			lcd_print3(90,60,buffer,&f3,0,0);
+		}
+		//ltoa(total/1024,buffer,10);
+		dwordToString(total/1024,buffer);
+		lcd_print3(90,70,buffer,&f3,0,0);
+		//ltoa(free/1024,buffer,10);
+		dwordToString(free/1024,buffer);
+		lcd_print3(90,80,buffer,&f3,0,0);
+		sprintf_P(buffer,PSTR("kB"));
+		lcd_print3(150,70,buffer,&f3,0,0);
+		sprintf_P(buffer,PSTR("kB"));
+		lcd_print3(150,80,buffer,&f3,0,0);
+		sprintf(buffer,"Version:%S",(wchar_t *)dateCompiler);		
+		lcd_print3(0,110,buffer,&f3,0,0);
+		//***************************************
+	}
+	else {
+		if(KEY_LEFT){
+			
+			KEY_LEFT = 0;
+		}
+		if(KEY_RIGHT){
+			
+			KEY_RIGHT = 0;
+		}
+	}
+}

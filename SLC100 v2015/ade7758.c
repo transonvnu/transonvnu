@@ -8,6 +8,7 @@ Date created: 01/07/2008
 #include <avr/eeprom.h>
 #include <math.h>
 #include <util/delay.h>
+#include "main.h"
 #include "spi.h"
 #include "ds1307.h"
 #include "ade7758.h" 
@@ -75,15 +76,15 @@ Date created: 01/07/2008
 #define STATIC_VOLTAGE		500                     //unit VOLTAGE ADC of ADE7758
 #define STATIC_CURRENT		100                     //unit CURRENT ADC of ADE7758
 //private vars
-long accEnergy[3] __attribute__ ((section (".init1")));
-long accKWH[3]  __attribute__ ((section (".init1")));
+long accEnergy[3] __attribute__ ((section (".noinit")));
+long accKWH[3]  __attribute__ ((section (".noinit")));
 unsigned char lastGain = 1;//,buffer[24];
-long KWHCal[3] __attribute__ ((section (".init1"))) ;				//calibration for KWH
-int voltCal[3] __attribute__ ((section (".init1")));				//calibration for voltage
-int ampereCal[3] __attribute__ ((section (".init1")));				//calibration for current
+long KWHCal[3] __attribute__ ((section (".noinit"))) ;				//calibration for KWH
+int voltCal[3] __attribute__ ((section (".noinit")));				//calibration for voltage
+int ampereCal[3] __attribute__ ((section (".noinit")));				//calibration for current
 unsigned int phase[3] = {100,100,100};
-unsigned int lastVoltage[3] __attribute__ ((section (".init1")));
-unsigned int lastCurrent[3] __attribute__ ((section (".init1")));
+unsigned int lastVoltage[3] __attribute__ ((section (".noinit")));
+unsigned int lastCurrent[3] __attribute__ ((section (".noinit")));
 
 #define boxNumber   1
  
@@ -383,22 +384,22 @@ void initTransducer(void){
 	accKWH[2] <<= 8;
 	accKWH[2] |= (unsigned char)buffer[11];
 
-	readEEPROM(buffer,48,71);
+	//readEEPROM(buffer,48,71);
 	
 	//KWHCal[0] = (((unsigned long) buffer[3]) << 24) + (((unsigned long) buffer[2]) << 16) + (((unsigned long) buffer[1]) << 8) + ((unsigned long) buffer[0]);
 	//KWHCal[1] = (((unsigned long) buffer[7]) << 24) + (((unsigned long) buffer[6]) << 16) + (((unsigned long) buffer[5]) << 8) + ((unsigned long) buffer[4]);
 	//KWHCal[2] = (((unsigned long) buffer[11]) << 24) + (((unsigned long) buffer[10]) << 16) + (((unsigned long) buffer[9]) << 8) + ((unsigned long) buffer[8]);
-	KWHCal[0] = eeprom_read_dword(ENERGY_CAL0);
-	KWHCal[1] = eeprom_read_dword(ENERGY_CAL1);
-	KWHCal[2] = eeprom_read_dword(ENERGY_CAL2);
+	KWHCal[0] = eeprom_read_dword(&energyCalPar[0]);
+	KWHCal[1] = eeprom_read_dword(&energyCalPar[1]);
+	KWHCal[2] = eeprom_read_dword(&energyCalPar[2]);
 	
-	voltCal[0] = eeprom_read_word(VOL_CAL0);
-	voltCal[1] = eeprom_read_word(VOL_CAL1);
-	voltCal[2] = eeprom_read_word(VOL_CAL2);
+	voltCal[0] = eeprom_read_word(&voltageCalPar[0]);
+	voltCal[1] = eeprom_read_word(&voltageCalPar[1]);
+	voltCal[2] = eeprom_read_word(&voltageCalPar[2]);
 	
-	ampereCal[0] = eeprom_read_word(AMP_CAL0);
-	ampereCal[1] = eeprom_read_word(AMP_CAL1);
-	ampereCal[2] = eeprom_read_word(AMP_CAL2);
+	ampereCal[0] = eeprom_read_word(&ampereCalPar[0]);
+	ampereCal[1] = eeprom_read_word(&ampereCalPar[1]);
+	ampereCal[2] = eeprom_read_word(&ampereCalPar[2]);
 	/*
 	KWHCal[0] = (unsigned char)buffer[3];
 	KWHCal[0] <<= 8;
@@ -498,7 +499,7 @@ void initTransducer(void){
 	writeGAIN(3);//Vref = 125mVAC
     writeCMODE_REGISTER();    //Noload Threshold selected   
     writeOMODE_REGISTER();    	//Frequency output enable  
-	readEEPROM(buffer,119,121);//read 3 bytes PHACALIB
+	eeprom_read_block(buffer,phaseCalib,3);//readEEPROM(buffer,119,121);//read 3 bytes PHACALIB
 	writePhaseCorrection(buffer[0],1);
 	writePhaseCorrection(buffer[1],2);
 	writePhaseCorrection(buffer[2],3);
@@ -1001,8 +1002,10 @@ void testCurrentCalib(int * iParam){
 	unsigned int TICoef1,TICoef2;
 	char buffer[5];
 
-	readEEPROM(buffer,72,75);
-
+	TICoef1 = eeprom_read_word(&TiCoefPar1);
+	TICoef2 = eeprom_read_word(&TiCoefPar2);
+	//readEEPROM(buffer,72,75);
+	/*
 	TICoef1 = (unsigned char)buffer[1];
 	TICoef1 <<= 8;
 	TICoef1 |= (unsigned char)buffer[0];  
@@ -1010,7 +1013,7 @@ void testCurrentCalib(int * iParam){
 	TICoef2 = (unsigned char)buffer[3];
 	TICoef2 <<= 8;
 	TICoef2 |= (unsigned char)buffer[2]; 
-
+	*/
 	ampereCal[0] = iParam[0];
 	ampereCal[1] = iParam[1];
 	ampereCal[2] = iParam[2];
@@ -1023,7 +1026,7 @@ void setCalibrationParam(long * eParam,int * vParam,int * iParam){
 	unsigned int temp,TICoef1,TICoef2;
 	unsigned long eTemp;
 	char buffer[24];
-	readEEPROM(buffer,72,75);
+	/*readEEPROM(buffer,72,75);
 	TICoef1 = (unsigned char)buffer[1];
 	TICoef1 <<= 8;
 	TICoef1 |= (unsigned char)buffer[0];  
@@ -1031,6 +1034,9 @@ void setCalibrationParam(long * eParam,int * vParam,int * iParam){
 	TICoef2 = (unsigned char)buffer[3];
 	TICoef2 <<= 8;
 	TICoef2 |= (unsigned char)buffer[2]; 	
+	*/
+	TICoef1 = eeprom_read_word(&TiCoefPar1);
+	TICoef2 = eeprom_read_word(&TiCoefPar2);
 	
 	KWHCal[0] = eParam[0];
 	KWHCal[1] = eParam[1];
@@ -1101,7 +1107,13 @@ void setCalibrationParam(long * eParam,int * vParam,int * iParam){
 	buffer[22] = temp & 0xFF;
 	buffer[23] = (temp >> 8) & 0xFF;
 	
-	writeEEPROM(buffer,48,71);
+	//writeEEPROM(buffer,48,71);
+	eeprom_busy_wait();
+	eeprom_write_block(buffer,energyCalPar,12);
+	eeprom_busy_wait();
+	eeprom_write_block(buffer+12,voltageCalPar,6);
+	eeprom_busy_wait();
+	eeprom_write_block(buffer+18,ampereCalPar,6);
 }
 
 void writeActivePowerScalling(unsigned int value){
